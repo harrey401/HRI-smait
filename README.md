@@ -80,7 +80,7 @@ SMAIT_ASR_BACKEND=faster_whisper python -m smait.main
 
 ```
 +------------------------------------------------------------------+
-|                      SMAIT HRI System v2.0                       |
+|                      SMAIT HRI System                            |
 +------------------------------------------------------------------+
 |                                                                  |
 |  +-------------+     +-------------+     +-------------+         |
@@ -88,7 +88,7 @@ SMAIT_ASR_BACKEND=faster_whisper python -m smait.main
 |  |             |     |             |     |             |         |
 |  | - Camera    |---->| - LASER ASD |---->| - Memory    |         |
 |  | - Microphone|     | - Parakeet  |     | - OpenAI    |         |
-|  | - (Isaac)   |     | - Semantic  |     | - TTS       |         |
+|  |             |     | - Semantic  |     | - TTS       |         |
 |  +-------------+     |   VAD       |     +-------------+         |
 |         |            +-------------+            |                |
 |         +-------------------+-------------------+                |
@@ -109,7 +109,7 @@ SMAIT_ASR_BACKEND=faster_whisper python -m smait.main
 ## Project Structure
 
 ```
-smait_hri_v2/
+smait_hri/
 ├── smait/
 │   ├── core/
 │   │   ├── config.py           # Configuration management
@@ -235,8 +235,8 @@ SMAIT_ASD_BACKEND=mar_heuristic
 
 ## Performance (with CUDA)
 
-| Metric | v2.0 Target | v2.0 Actual |
-|--------|------|-------------|-------------|
+| Metric | Target | Actual |
+|--------|-------------|-------------|
 | ASR Latency | <200ms | ~64ms (CUDA) |
 | TTS Latency | <200ms | ~100ms (Piper) |
 | Total Response | <500ms | ~800ms |
