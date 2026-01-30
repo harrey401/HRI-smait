@@ -1,0 +1,193 @@
+# SMAIT HRI v2.0 - Isaac Sim Test Configuration
+
+# ============================================================
+# PHASE 1: ASD Parameter Tuning
+# ============================================================
+phase1_asd_tuning:
+  enabled: true
+  description: "Find optimal ASD thresholds"
+  
+  # Fixed conditions
+  conditions:
+    av_delay_ms: 0
+    noise_level: 0.0
+    articulation_scale: 1.0
+    num_faces: 1
+  
+  # Parameters to sweep
+  sweep:
+    min_lip_movement:
+      start: 0.004
+      end: 0.016
+      step: 0.002
+      # Values: [0.004, 0.006, 0.008, 0.010, 0.012, 0.014, 0.016]
+    
+    min_mar_for_speech:
+      start: 0.03
+      end: 0.08
+      step: 0.01
+      # Values: [0.03, 0.04, 0.05, 0.06, 0.07, 0.08]
+    
+    asd_threshold:
+      start: 0.3
+      end: 0.7
+      step: 0.1
+      # Values: [0.3, 0.4, 0.5, 0.6, 0.7]
+  
+  # Test trials per parameter combination
+  trials_per_config: 10
+  
+  # Audio samples to use
+  audio_samples:
+    - "short_phrases/hello_how_are_you.wav"
+    - "short_phrases/what_time_is_it.wav"
+    - "short_phrases/thank_you_goodbye.wav"
+
+# ============================================================
+# PHASE 2: Audio-Visual Delay Tolerance  
+# ============================================================
+phase2_av_delay:
+  enabled: true
+  description: "Test robustness to AV desync"
+  
+  # Use best params from Phase 1 (update after Phase 1)
+  asd_params:
+    min_lip_movement: 0.008
+    min_mar_for_speech: 0.05
+    asd_threshold: 0.5
+  
+  # Delay values to test (ms)
+  # Positive = audio ahead of video, Negative = video ahead
+  delays_ms:
+    - -300
+    - -200
+    - -150
+    - -100
+    - -50
+    - 0
+    - 50
+    - 100
+    - 150
+    - 200
+    - 300
+  
+  trials_per_delay: 20
+  
+  # Acceptance criteria
+  min_accuracy: 0.90
+  max_acceptable_delay_ms: 200
+
+# ============================================================
+# PHASE 3: Noise Robustness
+# ============================================================
+phase3_noise:
+  enabled: true
+  description: "Test with background noise"
+  
+  # Use best params from Phase 1
+  asd_params:
+    min_lip_movement: 0.008
+    min_mar_for_speech: 0.05
+    asd_threshold: 0.5
+  
+  # Noise types
+  noise_sources:
+    - name: "cafe_ambience"
+      file: "noise/cafe_ambience.wav"
+      levels: [0.1, 0.2, 0.3, 0.5, 0.7]  # Mix ratio
+    
+    - name: "street_traffic"
+      file: "noise/street_traffic.wav"
+      levels: [0.1, 0.2, 0.3, 0.5]
+    
+    - name: "background_music"
+      file: "noise/background_music.wav"
+      levels: [0.1, 0.2, 0.3]
+    
+    - name: "overlapping_speech"
+      file: "noise/other_speaker.wav"
+      levels: [0.2, 0.4, 0.6]  # This is the hardest case
+  
+  trials_per_condition: 15
+
+# ============================================================
+# PHASE 4: Articulation Variation
+# ============================================================
+phase4_articulation:
+  enabled: true
+  description: "Test different speaking styles"
+  
+  # Articulation scaling applied to Audio2Face blendshapes
+  articulation_scales:
+    - name: "mumbling"
+      scale: 0.4  # 40% of normal mouth movement
+    
+    - name: "lazy"
+      scale: 0.6
+    
+    - name: "normal"
+      scale: 1.0
+    
+    - name: "exaggerated"
+      scale: 1.3
+    
+    - name: "very_exaggerated"
+      scale: 1.6
+  
+  trials_per_style: 15
+
+# ============================================================
+# PHASE 5: Multi-Speaker
+# ============================================================
+phase5_multi_speaker:
+  enabled: true
+  description: "Test with multiple faces"
+  
+  scenarios:
+    - name: "two_faces_one_speaking"
+      num_faces: 2
+      speaking_face: 0  # Index of speaking face
+      trials: 20
+    
+    - name: "three_faces_one_speaking"
+      num_faces: 3
+      speaking_face: 1
+      trials: 20
+    
+    - name: "speaker_handoff"
+      num_faces: 2
+      # Face 0 speaks, then face 1 speaks
+      sequence: [0, 1, 0, 1]
+      trials: 15
+
+# ============================================================
+# Global Settings
+# ============================================================
+global:
+  # Isaac Sim settings
+  isaac_sim:
+    headless: false  # Set true for batch testing
+    resolution: [1280, 720]
+    fps: 30
+  
+  # Audio2Face settings
+  audio2face:
+    streaming_port: 12030
+    character: "mark"  # Default A2F character
+  
+  # SMAIT system settings
+  smait:
+    config_override:
+      debug: true
+      show_video: false  # Disable for faster testing
+  
+  # Output settings
+  output:
+    save_video: false  # Save test videos (large files)
+    save_frames: false  # Save individual frames
+    save_metrics: true
+    results_dir: "./results"
+  
+  # Timing
+  warmup_seconds: 2.0  # Wait before starting measurements
+  cooldown_seconds: 1.0  # Wait between tests

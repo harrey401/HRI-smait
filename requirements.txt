@@ -1,0 +1,61 @@
+# SMAIT HRI System v2.0 Requirements
+# =====================================
+
+# Core dependencies
+numpy>=1.24.0
+opencv-python>=4.8.0
+
+# Audio processing
+sounddevice>=0.4.6
+soundfile>=0.12.1
+
+# Speech Recognition
+faster-whisper>=1.0.0        # Fallback: local, fast
+# amazon-transcribe>=0.6.0   # Optional: cloud-based
+
+# Voice Activity Detection
+# Note: silero-vad is loaded via torch hub, no separate package needed
+torch>=2.0.0                 # For Silero VAD, NeMo, LASER
+
+# Face detection
+mediapipe>=0.10.0
+
+# LLM Integration (choose based on your backend)
+openai>=1.0.0               # For OpenAI API + Semantic VAD
+requests>=2.31.0            # For Ollama API
+
+# Optional: for improved async performance
+uvloop>=0.19.0; sys_platform != 'win32'
+
+# Development dependencies
+python-dotenv>=1.0.0        # Environment variable management
+
+# =====================================
+# Phase 1: Core Upgrades
+# =====================================
+
+# Parakeet TDT ASR (via NeMo) - RECOMMENDED for low latency
+nemo_toolkit[asr]>=2.0.0    # NVIDIA NeMo for Parakeet TDT
+# Note: First run will download model from HuggingFace (~1.2GB)
+
+# LASER Active Speaker Detection
+onnxruntime-gpu>=1.16.0     # For LASER inference (use onnxruntime for CPU-only)
+onnx>=1.15.0                # ONNX model support
+
+# Behavior Trees (replaces FSM)
+py_trees>=2.2.0             # Behavior tree framework
+
+# Audio feature extraction for LASER
+librosa>=0.10.0             # MFCC extraction
+
+# =====================================
+# ROS 2 Integration (install separately)
+# =====================================
+# ROS 2 Humble packages are installed via apt, not pip
+# See docs/ros2_setup.md for instructions
+
+# =====================================
+# Isaac Sim Integration
+# =====================================
+# Isaac Sim has its own Python environment
+# See docs/isaac_sim_setup.md for instructions
