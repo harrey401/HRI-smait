@@ -1,4 +1,4 @@
-# SMAIT HRI System v2.0
+# SMAIT HRI System
 
 **Multimodal Human-Robot Interaction System for Service Robots**
 
@@ -235,13 +235,13 @@ SMAIT_ASD_BACKEND=mar_heuristic
 
 ## Performance (with CUDA)
 
-| Metric | v1.0 | v2.0 Target | v2.0 Actual |
+| Metric | v2.0 Target | v2.0 Actual |
 |--------|------|-------------|-------------|
-| ASR Latency | 1-2s | <200ms | ~64ms (CUDA) |
-| TTS Latency | ~1.2s | <200ms | ~100ms (Piper) |
-| Total Response | 2-4s | <500ms | ~800ms |
-| ASD per frame | N/A | <20ms | <1ms (LASER-lite) |
-| ASD Accuracy | ~85% | >90% | ~93% |
+| ASR Latency | <200ms | ~64ms (CUDA) |
+| TTS Latency | <200ms | ~100ms (Piper) |
+| Total Response | <500ms | ~800ms |
+| ASD per frame | <20ms | <1ms (LASER-lite) |
+| ASD Accuracy | >90% | ~93% |
 
 Note: ~600ms of response time is the OpenAI API call. Local processing (ASR + ASD + TTS) is very fast.
 
