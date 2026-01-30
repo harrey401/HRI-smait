@@ -254,25 +254,6 @@ pip install torch torchvision torchaudio --index-url https://download.pytorch.or
 ```
 
 
-## Development Status
-
-### Phase 1: Core Upgrades (Complete)
-- [x] Parakeet TDT ASR integration
-- [x] LASER Active Speaker Detection
-- [x] py_trees Behavior Tree architecture
-- [x] Semantic VAD turn-taking
-
-### Phase 2: Isaac Sim Testing (In Progress)
-- [ ] Domain randomization setup
-- [ ] Parameter sweep automation
-- [ ] Sim-to-real validation
-
-### Phase 3: Robot Deployment
-- [ ] ROS 2 node wrappers
-- [ ] ROS4HRI compatibility
-- [ ] PyPI distribution
-
-
 ## References
 
 - [Parakeet TDT](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v2) - NVIDIA's state-of-the-art ASR
