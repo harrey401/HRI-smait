@@ -178,14 +178,20 @@ class HRISystem:
         self.audio_pipeline.start()
         await self.transcriber.start()
         
-        # Start video thread
         self._running = True
-        self._video_thread = threading.Thread(
-            target=self._video_loop,
-            daemon=True,
-            name="VideoCapture"
-        )
-        self._video_thread.start()
+
+        # Start video thread (skip in voice-only mode)
+        if not getattr(self.config, 'voice_only', False):
+            self._video_thread = threading.Thread(
+                target=self._video_loop,
+                daemon=True,
+                name="VideoCapture"
+            )
+            self._video_thread.start()
+        else:
+            # Voice-only: start session immediately without face detection
+            print("[SYSTEM] Voice-only mode — starting session without face detection")
+            self.verifier._start_session("voice_only_user")
         
         # Start processing tasks
         self._main_task = asyncio.create_task(self._main_loop())

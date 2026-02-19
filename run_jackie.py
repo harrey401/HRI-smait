@@ -28,6 +28,8 @@ def main():
     parser.add_argument("--host", default="0.0.0.0")
     parser.add_argument("--port", type=int, default=8765)
     parser.add_argument("--test", action="store_true")
+    parser.add_argument("--voice-only", action="store_true",
+                        help="Skip face detection — listen immediately (use when camera unavailable)")
     args = parser.parse_args()
     
     local_ip = get_local_ip()
@@ -78,7 +80,13 @@ def main():
     set_jackie_server(get_jackie_server())
     
     print("[SMAIT] Starting full AI pipeline...\n")
-    hri = HRISystem(get_config())
+    config = get_config()
+    if args.voice_only:
+        config.voice_only = True
+        print("[SMAIT] Voice-only mode — face detection disabled, listening immediately\n")
+    else:
+        config.voice_only = getattr(config, 'voice_only', False)
+    hri = HRISystem(config)
     
     async def run():
         try:
