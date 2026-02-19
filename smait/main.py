@@ -446,9 +446,10 @@ class HRISystem:
             else:
                 print(f"\n[USER] \"{text}\"")
             
-            # Send user transcript to Jackie app
+            # Send user transcript to Jackie app + ensure active screen is shown
             if _jackie_server:
                 asyncio.create_task(_jackie_server.send_transcript(text, is_user=True))
+                asyncio.create_task(_jackie_server.send_state("engaged"))
             
             # Check if we have an early-prepared response
             if self._early_response_text == text and self._preparing_response:
@@ -484,6 +485,7 @@ class HRISystem:
             # Check if session should end (user said goodbye)
             if self.verifier.check_pending_session_end():
                 self.dialogue.reset_session()
+                self._greeted_users.clear()
                 if BT_AVAILABLE and self.behavior_tree:
                     bb = get_blackboard()
                     bb.session_state = SessionState.IDLE
@@ -553,7 +555,8 @@ class HRISystem:
                     print(f"[TTS] Farewell error: {e}")
                 
                 self.dialogue.reset_session()
-                
+                self._greeted_users.clear()
+
                 # Reset BT state
                 if BT_AVAILABLE and self.behavior_tree:
                     bb = get_blackboard()
