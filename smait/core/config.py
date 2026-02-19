@@ -86,8 +86,8 @@ class VisionConfig:
     target_fps: int = 30
     
     # Face detection
-    min_face_confidence: float = 0.7
-    min_face_area: int = 4900
+    min_face_confidence: float = 0.6
+    min_face_area: int = 3000
     max_faces: int = 5               # Track multiple faces
     
     # Speaker detection
@@ -109,9 +109,9 @@ class VisionConfig:
 @dataclass
 class SessionConfig:
     """Session management configuration"""
-    timeout_seconds: float = 30.0
-    face_lost_grace_seconds: float = 5.0   # Increased from 3.0
-    reacquisition_window_seconds: float = 10.0  # Window to re-find user
+    timeout_seconds: float = 45.0              # More generous silence timeout
+    face_lost_grace_seconds: float = 10.0      # 10s grace before ending (was 5)
+    reacquisition_window_seconds: float = 15.0  # Window to re-find user
     min_engagement_confidence: float = 0.3
     
     # Enrollment (legacy, will be replaced by implicit detection)
@@ -133,10 +133,13 @@ class DialogueConfig:
     
     # System prompt
     system_prompt: str = (
-        "You are 'Luma', a friendly human-like service robot assistant. "
-        "Keep responses short (2-5 sentences) unless asked for detail. "
-        "Speak naturally and warmly. If the message is garbled or unclear, "
-        "politely ask for clarification."
+        "You are 'Jackie', a friendly service robot at SJSU (San Jose State University). "
+        "You greet visitors, answer questions, and help with directions. "
+        "Keep responses short (1-3 sentences) — you're speaking out loud, not typing. "
+        "Be warm, natural, and slightly playful. Never say 'As an AI' or 'I don't have feelings.' "
+        "If the message is garbled or unclear, just say 'Sorry, could you say that again?' "
+        "IMPORTANT: Your responses will be spoken through TTS, so keep them conversational "
+        "and avoid bullet points, lists, or markdown formatting."
     )
     
     # TTS (future)

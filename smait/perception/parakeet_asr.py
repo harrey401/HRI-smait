@@ -79,8 +79,10 @@ class ParakeetTDTEngine:
                 model_name=self.model_name
             )
             
-            # Move to device
+            # Move to device with half precision to save VRAM
             self.model = self.model.to(device)
+            if device == "cuda":
+                self.model = self.model.half()  # fp16 — cuts VRAM ~50%
             self.model.eval()
             
             # Disable gradient computation for inference

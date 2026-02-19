@@ -458,8 +458,32 @@ class IsaacSimVideoSource(VideoSource):
 # Factory Functions
 # ============================================================================
 
+# ============================================================================
+# Jackie Source Injection (for run_jackie.py)
+# ============================================================================
+
+_jackie_audio_source: Optional[AudioSource] = None
+_jackie_video_source: Optional[VideoSource] = None
+
+
+def set_jackie_audio_source(source: AudioSource):
+    """Register Jackie audio source for factory override"""
+    global _jackie_audio_source
+    _jackie_audio_source = source
+
+
+def set_jackie_video_source(source: VideoSource):
+    """Register Jackie video source for factory override"""
+    global _jackie_video_source
+    _jackie_video_source = source
+
+
 def create_audio_source() -> AudioSource:
     """Create appropriate audio source based on config"""
+    global _jackie_audio_source
+    if _jackie_audio_source is not None:
+        return _jackie_audio_source
+    
     config = get_config()
     
     if config.mode == DeploymentMode.ISAAC_SIM:
@@ -477,6 +501,10 @@ def create_audio_source() -> AudioSource:
 
 def create_video_source() -> VideoSource:
     """Create appropriate video source based on config"""
+    global _jackie_video_source
+    if _jackie_video_source is not None:
+        return _jackie_video_source
+    
     config = get_config()
     
     if config.mode == DeploymentMode.ISAAC_SIM:

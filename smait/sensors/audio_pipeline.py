@@ -229,7 +229,7 @@ class VoiceActivityDetector:
 
 class AudioPipeline:
     """
-    Main audio processing pipeline.
+        Main audio processing pipeline.
     Captures audio, runs VAD, and yields speech segments.
     """
     

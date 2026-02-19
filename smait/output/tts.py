@@ -377,7 +377,13 @@ class TTSPlayer:
                 if os.name == "nt":  # Windows
                     os.system(f'start /min "" "{temp_path}"')
                 else:  # Linux/Mac
-                    os.system(f'mpv --no-video "{temp_path}" 2>/dev/null || afplay "{temp_path}" 2>/dev/null')
+                    # aplay for WAV, mpv/ffplay for others
+                    if audio_format == "wav":
+                        ret = os.system(f'aplay -q "{temp_path}" 2>/dev/null')
+                    else:
+                        ret = 1
+                    if ret != 0:
+                        os.system(f'ffplay -nodisp -autoexit -loglevel quiet "{temp_path}" 2>/dev/null || mpv --no-video "{temp_path}" 2>/dev/null || afplay "{temp_path}" 2>/dev/null')
             finally:
                 # Clean up after a delay
                 threading.Timer(5.0, lambda: os.unlink(temp_path)).start()

@@ -75,10 +75,10 @@ class EngagementDetector:
 
     def __init__(
         self,
-        min_face_area: int = 15000,  # Minimum face bbox area in pixels
-        max_head_yaw: float = 35.0,  # Max yaw angle to consider "facing" (degrees)
-        max_head_pitch: float = 30.0,  # Max pitch angle
-        require_greeting_for_new: bool = True,  # Require greeting for new session
+        min_face_area: int = 5000,  # Minimum face bbox area in pixels (lowered — was 15000, too strict up close)
+        max_head_yaw: float = 40.0,  # Max yaw angle to consider "facing" (degrees, relaxed from 35)
+        max_head_pitch: float = 35.0,  # Max pitch angle (relaxed from 30)
+        require_greeting_for_new: bool = False,  # No greeting required — engage naturally
     ):
         self.config = get_config()
         self.min_face_area = min_face_area

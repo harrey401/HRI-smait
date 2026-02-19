@@ -14,6 +14,14 @@ import time
 from typing import Optional
 import cv2
 
+# Jackie server reference (set by run_jackie.py)
+_jackie_server = None
+
+def set_jackie_server(server):
+    """Set the Jackie WebSocket server for sending messages to the app"""
+    global _jackie_server
+    _jackie_server = server
+
 from smait.core.config import get_config, set_config, Config, DeploymentMode
 from smait.core.events import (
     TranscriptResult, SessionState, VerifyResult, VerifyOutput,
@@ -91,6 +99,11 @@ class HRISystem:
         self._response_times = []
         self._early_predictions = 0
         self._total_turns = 0
+        
+        # Proactive greeting
+        self._greeted_users: set = set()  # Track users we've already greeted
+        self._last_greeting_time: float = 0
+        self._greeting_cooldown: float = 5.0  # Min seconds between greetings
     
     async def start(self):
         """Initialize and start the HRI system"""
@@ -259,6 +272,28 @@ class HRISystem:
                     bb.current_asd_results = result['asd_results']
                     bb.primary_speaker_id = result['primary_speaker_id']
                 
+                # Proactive greeting: greet approaching users
+                if (result['state'] == SessionState.DETECTING 
+                    and result['faces']
+                    and time.time() - self._last_greeting_time > self._greeting_cooldown):
+                    # Check if any face is close + facing us and ungreeted
+                    for face in result['faces']:
+                        if (face.track_id not in self._greeted_users 
+                            and face.bbox.area >= self.config.vision.min_face_area):
+                            engagement = self.verifier.engagement.check_engagement(
+                                face=face, transcript=None, is_new_session=True
+                            )
+                            if engagement.proximity_ok and engagement.attention_ok:
+                                self._greeted_users.add(face.track_id)
+                                self._last_greeting_time = time.time()
+                                # Start session and greet
+                                self.verifier._start_session(face.track_id)
+                                asyncio.run_coroutine_threadsafe(
+                                    self._proactive_greet(), 
+                                    asyncio.get_event_loop()
+                                )
+                                break
+                
                 # Draw additional info
                 if result['frame'] is not None:
                     self._draw_overlay(result['frame'])
@@ -306,6 +341,38 @@ class HRISystem:
                 (200, 200, 200),
                 1
             )
+    
+    async def _proactive_greet(self):
+        """Proactively greet an approaching user"""
+        try:
+            import random
+            greetings = [
+                "Hi there! How can I help you today?",
+                "Hello! Welcome, what can I do for you?",
+                "Hey! Nice to see you. Need any help?",
+                "Hi! I'm Jackie. How can I help?",
+            ]
+            greeting = random.choice(greetings)
+            
+            print(f"\n[ROBOT] {greeting} (proactive)")
+            
+            # Add to dialogue memory so LLM has context
+            self.dialogue.memory.add_assistant_turn(greeting)
+            
+            # Send to Jackie app
+            if _jackie_server:
+                asyncio.create_task(_jackie_server.send_transcript(greeting, is_user=False))
+                asyncio.create_task(_jackie_server.send_tts(greeting))
+                asyncio.create_task(_jackie_server.send_state("engaged"))
+            
+            # Synthesize and play
+            if self.tts_engine and self.tts_player:
+                tts_result = await self.tts_engine.synthesize(greeting)
+                if self.config.debug:
+                    print(f"        (TTS: {tts_result.latency_ms:.0f}ms)")
+                asyncio.create_task(self.tts_player.play_async(tts_result))
+        except Exception as e:
+            print(f"[GREET] Error: {e}")
     
     async def _bt_loop(self):
         """Behavior tree tick loop"""
@@ -377,6 +444,10 @@ class HRISystem:
             else:
                 print(f"\n[USER] \"{text}\"")
             
+            # Send user transcript to Jackie app
+            if _jackie_server:
+                asyncio.create_task(_jackie_server.send_transcript(text, is_user=True))
+            
             # Check if we have an early-prepared response
             if self._early_response_text == text and self._preparing_response:
                 if self.config.debug:
@@ -393,13 +464,17 @@ class HRISystem:
             if self.config.debug:
                 print(f"        (latency: {response_time:.0f}ms)")
 
-            # Synthesize and play TTS
+            # Send response to Jackie app (for display + TTS on robot)
+            if _jackie_server:
+                asyncio.create_task(_jackie_server.send_transcript(response.text, is_user=False))
+                asyncio.create_task(_jackie_server.send_tts(response.text))
+
+            # Also play TTS locally (for testing without robot)
             if self.tts_engine and self.tts_player:
                 try:
                     tts_result = await self.tts_engine.synthesize(response.text)
                     if self.config.debug:
                         print(f"        (TTS: {tts_result.latency_ms:.0f}ms)")
-                    # Play in background to not block
                     asyncio.create_task(self.tts_player.play_async(tts_result))
                 except Exception as e:
                     print(f"[TTS] Error: {e}")
@@ -456,6 +531,23 @@ class HRISystem:
             
             if self.verifier and self.verifier.check_timeout():
                 print("[SESSION] Timeout - session ended")
+                
+                # Say goodbye before ending
+                try:
+                    import random
+                    farewells = [
+                        "It was nice talking to you! Have a great day.",
+                        "See you around! Let me know if you need anything.",
+                        "Bye! Come back anytime.",
+                    ]
+                    farewell = random.choice(farewells)
+                    print(f"[ROBOT] {farewell} (timeout farewell)")
+                    if self.tts_engine and self.tts_player:
+                        tts_result = await self.tts_engine.synthesize(farewell)
+                        asyncio.create_task(self.tts_player.play_async(tts_result))
+                except Exception as e:
+                    print(f"[TTS] Farewell error: {e}")
+                
                 self.dialogue.reset_session()
                 
                 # Reset BT state

@@ -64,6 +64,11 @@ class SpeakerVerifier:
 
         # Farewell handling - end session after robot responds to goodbye
         self._pending_session_end: bool = False
+        
+        # Re-engagement: remember last user for quick resume
+        self._last_user_id: Optional[int] = None
+        self._last_session_end: Optional[float] = None
+        self._reengagement_window = 30.0  # seconds to allow quick re-engage
 
         self.lock = threading.Lock()
         
@@ -194,6 +199,10 @@ class SpeakerVerifier:
                 reason="no_visual_speech_detected"
             )
         
+        # NOTE: Directional filtering removed — Jackie has a mic array,
+        # and face-position filtering was too strict for real-world use.
+        # TODO: Implement proper beamforming with Jackie's mic array.
+        
         # Get the face with highest speaking score during the window
         best_speaker_id = max(speaking_scores, key=speaking_scores.get)
         best_score = speaking_scores[best_speaker_id]
@@ -203,29 +212,38 @@ class SpeakerVerifier:
 
         # Session management
         if self.state == SessionState.IDLE or self.state == SessionState.DETECTING:
-            # NEW SESSION: Check engagement (proximity + attention + greeting)
-            if best_face:
-                engagement = self.engagement.check_engagement(
-                    face=best_face,
-                    transcript=transcript.text,
-                    is_new_session=True
-                )
-
-                if not engagement.is_engaged:
-                    # Not engaged - reject
-                    if self.config.debug:
-                        print(f"[ENGAGEMENT] Not engaged: {engagement.reason}")
-                    return VerifyOutput(
-                        result=VerifyResult.REJECT,
-                        text=transcript.text,
-                        confidence=best_score,
-                        reason=f"not_engaged:{engagement.reason}",
-                        face_id=best_speaker_id,
-                        asd_score=best_score
+            # Quick re-engagement: same user within window, skip full check
+            if (self._last_user_id is not None 
+                and best_speaker_id == self._last_user_id
+                and self._last_session_end is not None
+                and (time.time() - self._last_session_end) < self._reengagement_window):
+                if self.config.debug:
+                    print(f"[SESSION] Quick re-engagement with user {best_speaker_id}")
+                self._start_session(best_speaker_id)
+            else:
+                # NEW SESSION: Check engagement (proximity + attention)
+                if best_face:
+                    engagement = self.engagement.check_engagement(
+                        face=best_face,
+                        transcript=transcript.text,
+                        is_new_session=True
                     )
 
-            # Engaged - start new session
-            self._start_session(best_speaker_id)
+                    if not engagement.is_engaged:
+                        # Not engaged - reject
+                        if self.config.debug:
+                            print(f"[ENGAGEMENT] Not engaged: {engagement.reason}")
+                        return VerifyOutput(
+                            result=VerifyResult.REJECT,
+                            text=transcript.text,
+                            confidence=best_score,
+                            reason=f"not_engaged:{engagement.reason}",
+                            face_id=best_speaker_id,
+                            asd_score=best_score
+                        )
+
+                # Engaged - start new session
+                self._start_session(best_speaker_id)
 
             return VerifyOutput(
                 result=VerifyResult.ACCEPT,
@@ -356,6 +374,10 @@ class SpeakerVerifier:
         """End the current session"""
         old_user = self.target_user_id
         
+        # Remember for re-engagement
+        self._last_user_id = self.target_user_id
+        self._last_session_end = time.time()
+        
         self.state = SessionState.IDLE
         self.target_user_id = None
         self.session_start = None
@@ -435,7 +457,6 @@ class SpeakerVerifier:
         
         # Start detecting if no session and faces visible
         if self.state == SessionState.IDLE and faces:
-            self.state = SessionState.DETECTING
             self.state = SessionState.DETECTING
     
     def _get_status_string(self) -> str:
