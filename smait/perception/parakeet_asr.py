@@ -84,6 +84,17 @@ class ParakeetTDTEngine:
             if device == "cuda":
                 self.model = self.model.half()  # fp16 — cuts VRAM ~50%
             self.model.eval()
+
+            # Disable CUDA graph decoder — breaks on Blackwell (RTX 50xx) GPUs
+            # due to changed CUDA API return format in CUDA 12.x+
+            try:
+                from omegaconf import OmegaConf, open_dict
+                with open_dict(self.model.cfg):
+                    self.model.cfg.decoding.greedy.use_cuda_graph_decoder = False
+                self.model.change_decoding_strategy(self.model.cfg.decoding)
+                print(f"[ASR] CUDA graph decoder disabled (Blackwell compat)")
+            except Exception as cg_err:
+                print(f"[ASR] Could not disable CUDA graphs: {cg_err}")
             
             # Disable gradient computation for inference
             for param in self.model.parameters():
