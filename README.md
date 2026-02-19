@@ -17,6 +17,7 @@ A real-time Human-Robot Interaction framework that enables natural, face-to-face
 - **Semantic VAD** — Early turn prediction for lower response latency
 - **Multi-turn Dialogue** — Sliding window conversation memory with LLM backends (OpenAI, Ollama)
 - **Local TTS** — Piper TTS (~70ms synthesis latency)
+- **Directional Audio (DOA)** — Hardware Direction of Arrival via iFLYTEK CAE SDK on Jackie's 4-mic array; angle streamed to PC in real-time over WebSocket (binary `0x03` frame or JSON `doa` command)
 - **Jackie Integration** — WebSocket bridge for Android robot communication (audio, video, TTS, DOA)
 - **Session Management** — Auto-timeout, farewell detection, quick re-engagement
 
@@ -35,6 +36,75 @@ A real-time Human-Robot Interaction framework that enables natural, face-to-face
 └─────────────────────┘                │  Piper TTS            │
                                         └──────────────────────┘
 ```
+
+## Directional Audio (DOA)
+
+Jackie's 4-microphone linear array uses the **iFLYTEK CAE SDK** to perform hardware-level audio processing. DOA is one of the outputs — the SDK computes the azimuth angle of the loudest sound source and sends it to the PC in real-time.
+
+### How It Works
+
+```
+Jackie (Android)                          PC (Edge Server)
+─────────────────                         ──────────────────
+4-mic array                               JackieWebSocketServer
+  └─ iFLYTEK CAE SDK                           └─ _handle_command()
+       ├─ AEC (echo cancellation)                    └─ "doa" → _last_doa_angle
+       ├─ Beamforming (noise suppression)                  └─ _doa_callback(angle)
+       ├─ DOA (direction estimation)
+       └─ Sends angle over WebSocket
+```
+
+The Android app transmits the DOA angle two ways:
+- **Binary protocol** (efficient): `0x03` header + 4-byte big-endian float (degrees)
+- **JSON protocol** (legacy): `{"type": "doa", "angle": <float>}`
+
+The PC stores the latest angle in `server._last_doa_angle` and fires `server._doa_callback(angle)` if registered.
+
+### DOA Angle Convention
+- **0°** = directly in front of the robot
+- **Positive** = speaker to the right
+- **Negative** = speaker to the left
+- Range: approximately **±90°** (linear mic array)
+
+### Hooking Into DOA
+
+Register a callback from `run_jackie.py` or any module with access to the server:
+
+```python
+from smait.sensors.network_source import get_jackie_server
+
+server = get_jackie_server()
+
+def on_doa(angle: float):
+    print(f"Speaker detected at {angle:.1f}°")
+    # e.g. send rotate command to Jackie's drive system
+    if abs(angle) > 15:  # ignore small deviations
+        direction = "right" if angle > 0 else "left"
+        server.send_rotate(direction, abs(angle))  # implement as needed
+
+server._doa_callback = on_doa
+```
+
+### Reading the Current Angle
+
+```python
+from smait.sensors.network_source import get_jackie_server
+
+server = get_jackie_server()
+angle = getattr(server, '_last_doa_angle', None)
+if angle is not None:
+    print(f"Last DOA: {angle:.1f}°")
+```
+
+### CAE SDK Status
+
+The Android app also reports the CAE processing state on connect:
+```json
+{"type": "cae_status", "aec": true, "beamforming": true, "noise_suppression": true}
+```
+This is logged by the server — check the console output to confirm CAE is active.
+
+---
 
 ## Quick Start
 
