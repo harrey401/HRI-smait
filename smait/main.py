@@ -240,14 +240,8 @@ class HRISystem:
     
     def _video_loop(self):
         """Video capture and processing loop"""
-        from smait.sensors.sources import CameraSource
-        
         try:
-            camera = CameraSource(
-                device=self.config.vision.camera_index,
-                width=self.config.vision.frame_width,
-                height=self.config.vision.frame_height
-            )
+            camera = create_video_source()
             camera.start()
         except Exception as e:
             print(f"[VIDEO] Failed to start camera: {e}")

@@ -8,6 +8,10 @@ import asyncio
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+# Suppress Qt/wayland warnings (cosmetic, not errors)
+os.environ.setdefault("QT_QPA_PLATFORM", "xcb")
+os.environ.setdefault("OPENCV_LOG_LEVEL", "ERROR")
+
 def get_local_ip():
     import socket
     try:
