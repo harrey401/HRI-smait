@@ -72,9 +72,12 @@ class JackieVideoSource(VideoSource):
     
     def start(self):
         self._active = True
+        # Activate the internal buffer so read() returns frames
+        self._net_video._active = True
     
     def stop(self):
         self._active = False
+        self._net_video._active = False
     
     def read(self) -> Tuple[bool, Optional[np.ndarray]]:
         return self._net_video.read()
