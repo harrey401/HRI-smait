@@ -488,6 +488,8 @@ class HRISystem:
                     bb = get_blackboard()
                     bb.session_state = SessionState.IDLE
                     bb.target_user_id = None
+                if _jackie_server:
+                    asyncio.create_task(_jackie_server.send_state("idle"))
 
             self._last_activity = time.time()
             self._preparing_response = False
@@ -557,6 +559,10 @@ class HRISystem:
                     bb = get_blackboard()
                     bb.session_state = SessionState.IDLE
                     bb.target_user_id = None
+
+                # Tell app to return to idle screen and clear chat
+                if _jackie_server:
+                    asyncio.create_task(_jackie_server.send_state("idle"))
     
     def _on_vad_change(self, is_speech: bool, probability: float):
         """Callback for VAD state changes"""
