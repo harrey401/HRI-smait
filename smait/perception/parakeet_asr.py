@@ -149,11 +149,16 @@ class ParakeetTDTEngine:
                 with torch.no_grad():
                     # Use the model's transcribe method for simplicity
                     # This handles all preprocessing internally
-                    hypotheses = self.model.transcribe(
+                    result = self.model.transcribe(
                         [audio_float],
                         batch_size=1,
                         return_hypotheses=True
                     )
+                    # Newer NeMo (2.0+) returns (hypotheses, all_hypotheses) tuple
+                    if isinstance(result, tuple):
+                        hypotheses = result[0]
+                    else:
+                        hypotheses = result
                 
                 # Extract results
                 if hypotheses and len(hypotheses) > 0:

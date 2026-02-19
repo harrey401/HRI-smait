@@ -107,6 +107,8 @@ class HRISystem:
     
     async def start(self):
         """Initialize and start the HRI system"""
+        # Store the main event loop for use in non-async threads
+        self._loop = asyncio.get_event_loop()
         print("=" * 60)
         print("SMAIT HRI System v2.0 (Integrated)")
         print("=" * 60)
@@ -289,8 +291,8 @@ class HRISystem:
                                 # Start session and greet
                                 self.verifier._start_session(face.track_id)
                                 asyncio.run_coroutine_threadsafe(
-                                    self._proactive_greet(), 
-                                    asyncio.get_event_loop()
+                                    self._proactive_greet(),
+                                    self._loop
                                 )
                                 break
                 
