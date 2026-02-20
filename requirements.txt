@@ -59,3 +59,5 @@ librosa>=0.10.0             # MFCC extraction
 # =====================================
 # Isaac Sim has its own Python environment
 # See docs/isaac_sim_setup.md for instructions
+psutil
+editdistance
