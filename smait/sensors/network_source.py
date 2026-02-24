@@ -201,56 +201,83 @@ class JackieWebSocketServer:
                   f"BF={cmd.get('beamforming', False)}, "
                   f"NS={cmd.get('noise_suppression', False)}")
     
-    async def send_tts(self, text: str):
+    def _dispatch(self, coro):
+        """Thread-safe: schedule a coroutine on the server's own event loop."""
+        if self._loop and self._loop.is_running():
+            asyncio.run_coroutine_threadsafe(coro, self._loop)
+
+    # ── public sync API (safe to call from any thread/loop) ──────────────────
+
+    def send_tts(self, text: str):
         """Send TTS text to Jackie for playback via Android TTS"""
-        for ws in self._clients:
+        self._dispatch(self._send_tts_async(text))
+
+    def send_tts_audio(self, audio_data: bytes):
+        """Send TTS audio bytes back to Jackie for playback"""
+        self._dispatch(self._send_tts_audio_async(audio_data))
+
+    def send_response(self, text: str):
+        """Send text response to Jackie (for display on screen)"""
+        self._dispatch(self._send_response_async(text))
+
+    def send_transcript(self, text: str, is_user: bool = True):
+        """Send transcript to Jackie (for display on screen)"""
+        self._dispatch(self._send_transcript_async(text, is_user))
+
+    def send_state(self, state: str):
+        """Send session state to Jackie (for UI updates)"""
+        self._dispatch(self._send_state_async(state))
+
+    def send_photo_command(self):
+        """Tell Jackie to take a selfie photo"""
+        self._dispatch(self._send_photo_async())
+
+    # ── private async implementations (run on server's own loop) ─────────────
+
+    async def _send_tts_async(self, text: str):
+        for ws in list(self._clients):
             try:
                 await ws.send(json.dumps({"type": "tts", "text": text}))
-            except:
+            except Exception:
                 pass
-    
-    async def send_tts_audio(self, audio_data: bytes):
-        """Send TTS audio bytes back to Jackie for playback"""
-        for ws in self._clients:
+
+    async def _send_tts_audio_async(self, audio_data: bytes):
+        for ws in list(self._clients):
             try:
                 await ws.send(b'\x04' + audio_data)
-            except:
+            except Exception:
                 pass
-    
-    async def send_response(self, text: str):
-        """Send text response to Jackie (for display on screen)"""
-        for ws in self._clients:
+
+    async def _send_response_async(self, text: str):
+        for ws in list(self._clients):
             try:
                 await ws.send(json.dumps({"type": "response", "text": text}))
-            except:
+            except Exception:
                 pass
-    
-    async def send_transcript(self, text: str, is_user: bool = True):
-        """Send transcript to Jackie (for display on screen)"""
-        for ws in self._clients:
+
+    async def _send_transcript_async(self, text: str, is_user: bool = True):
+        for ws in list(self._clients):
             try:
                 await ws.send(json.dumps({
                     "type": "transcript",
                     "text": text,
                     "speaker": "user" if is_user else "robot"
                 }))
-            except:
+            except Exception:
                 pass
-    
-    async def send_state(self, state: str):
-        """Send session state to Jackie (for UI updates)"""
-        for ws in self._clients:
+
+    async def _send_state_async(self, state: str):
+        for ws in list(self._clients):
             try:
                 await ws.send(json.dumps({"type": "state", "state": state}))
-            except:
+            except Exception:
                 pass
-    
-    async def send_photo_command(self):
-        """Tell Jackie to take a selfie photo"""
-        for ws in self._clients:
+
+    async def _send_photo_async(self):
+        for ws in list(self._clients):
             try:
                 await ws.send(json.dumps({"type": "take_photo"}))
-            except:
+            except Exception:
                 pass
     
     async def _run(self):

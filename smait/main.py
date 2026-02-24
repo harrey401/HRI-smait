@@ -363,9 +363,9 @@ class HRISystem:
             
             # Send to Jackie app
             if _jackie_server:
-                asyncio.create_task(_jackie_server.send_transcript(greeting, is_user=False))
-                asyncio.create_task(_jackie_server.send_tts(greeting))
-                asyncio.create_task(_jackie_server.send_state("engaged"))
+                _jackie_server.send_transcript(greeting, is_user=False)
+                _jackie_server.send_tts(greeting)
+                _jackie_server.send_state("engaged")
             
             # Synthesize and play
             if self.tts_engine and self.tts_player:
@@ -448,8 +448,8 @@ class HRISystem:
             
             # Send user transcript to Jackie app + ensure active screen is shown
             if _jackie_server:
-                asyncio.create_task(_jackie_server.send_transcript(text, is_user=True))
-                asyncio.create_task(_jackie_server.send_state("engaged"))
+                _jackie_server.send_transcript(text, is_user=True)
+                _jackie_server.send_state("engaged")
             
             # Check if we have an early-prepared response
             if self._early_response_text == text and self._preparing_response:
@@ -469,8 +469,8 @@ class HRISystem:
 
             # Send response to Jackie app (for display + TTS on robot)
             if _jackie_server:
-                asyncio.create_task(_jackie_server.send_transcript(response.text, is_user=False))
-                asyncio.create_task(_jackie_server.send_tts(response.text))
+                _jackie_server.send_transcript(response.text, is_user=False)
+                _jackie_server.send_tts(response.text)
 
             # Also play TTS locally (for testing without robot)
             if self.tts_engine and self.tts_player:
@@ -491,7 +491,7 @@ class HRISystem:
                     bb.session_state = SessionState.IDLE
                     bb.target_user_id = None
                 if _jackie_server:
-                    asyncio.create_task(_jackie_server.send_state("idle"))
+                    _jackie_server.send_state("idle")
 
             self._last_activity = time.time()
             self._preparing_response = False
@@ -565,7 +565,7 @@ class HRISystem:
 
                 # Tell app to return to idle screen and clear chat
                 if _jackie_server:
-                    asyncio.create_task(_jackie_server.send_state("idle"))
+                    _jackie_server.send_state("idle")
     
     def _on_vad_change(self, is_speech: bool, probability: float):
         """Callback for VAD state changes"""
