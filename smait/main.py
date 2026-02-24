@@ -105,6 +105,10 @@ class HRISystem:
         self._last_greeting_time: float = 0
         self._greeting_cooldown: float = 25.0  # Min seconds between greetings (prevents re-greet on track_id reassignment)
 
+        # Dedup: catch rapid-fire duplicate transcripts from Parakeet
+        self._last_transcript_text: str = ""
+        self._last_transcript_time: float = 0.0
+
     
     async def start(self):
         """Initialize and start the HRI system"""
@@ -433,15 +437,38 @@ class HRISystem:
             "sure", "no", "yes", "hey", "hi", "bye", "thanks", "thank you",
         }
         text_lower = text.lower().strip(".,!? ")
-        word_count = len(text_lower.split())
+        words = text_lower.split()
+        word_count = len(words)
+
+        # 1. Single-word filler
         if word_count <= 1 and text_lower in _FILLER_WORDS:
             if self.config.debug:
                 print(f"[FILTER] Dropped filler: \"{text}\"")
             return
+
+        # 2. Too short
         if len(text) < 4:
             if self.config.debug:
                 print(f"[FILTER] Dropped too short: \"{text}\"")
             return
+
+        # 3. Repetition hallucination — e.g. "yeah yeah yeah", "okay okay okay"
+        #    If >60% of words are the same single word, it's Parakeet looping on noise
+        if word_count >= 2:
+            most_common = max(set(words), key=words.count)
+            if words.count(most_common) / word_count > 0.6 and most_common in _FILLER_WORDS:
+                if self.config.debug:
+                    print(f"[FILTER] Dropped repetition hallucination: \"{text}\"")
+                return
+
+        # 4. Dedup — same text fired twice within 3 seconds (Parakeet streaming artifact)
+        now = time.time()
+        if text_lower == self._last_transcript_text and (now - self._last_transcript_time) < 3.0:
+            if self.config.debug:
+                print(f"[FILTER] Dropped duplicate: \"{text}\"")
+            return
+        self._last_transcript_text = text_lower
+        self._last_transcript_time = now
 
         start_time = time.time()
         self._total_turns += 1
