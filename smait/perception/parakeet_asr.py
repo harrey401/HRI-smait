@@ -182,7 +182,11 @@ class ParakeetTDTEngine:
                         words = []
                     else:
                         text = hyp.text if hasattr(hyp, 'text') else str(hyp)
-                        confidence = float(hyp.score) if hasattr(hyp, 'score') else 0.9
+                        # Normalize Parakeet's raw cumulative log-prob score to ~0-1
+                        # hyp.score is cumulative (scales with length), use log1p to compress
+                        import math
+                        raw_score = float(hyp.score) if hasattr(hyp, 'score') else 90.0
+                        confidence = min(1.0, math.log1p(raw_score) / 10.0)
                         
                         # Extract word timestamps if available
                         words = []
