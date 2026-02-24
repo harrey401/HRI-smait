@@ -257,6 +257,19 @@ class SpeakerVerifier:
         # Active session - verify it's the same user
         if self.target_user_id is not None:
             if best_speaker_id == self.target_user_id:
+                # Reject if ASD confidence is too low — user is in view but not actually speaking
+                if best_score < 0.25:
+                    if self.config.debug:
+                        print(f"[REJECT] Target visible but ASD too low ({best_score:.2f}) — not speaking")
+                    return VerifyOutput(
+                        result=VerifyResult.REJECT,
+                        text=transcript.text,
+                        confidence=best_score,
+                        reason="asd_score_too_low",
+                        face_id=best_speaker_id,
+                        asd_score=best_score
+                    )
+
                 # Same user - check if they're saying goodbye
                 if self.engagement.detect_farewell(transcript.text):
                     if self.config.debug:
@@ -345,7 +358,9 @@ class SpeakerVerifier:
         for timestamp, results in asd_history:
             if window_start <= timestamp <= window_end:
                 for result in results:
-                    if result.is_speaking or result.probability > 0.3:
+                    # Require actual is_speaking flag — probability alone causes false positives
+                    # for faces that are in view but not talking (resting face movement)
+                    if result.is_speaking and result.probability > 0.25:
                         face_probs[result.track_id].append(result.probability)
         
         # Calculate average speaking score for each face
