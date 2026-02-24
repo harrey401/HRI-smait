@@ -258,9 +258,9 @@ class SpeakerVerifier:
         if self.target_user_id is not None:
             if best_speaker_id == self.target_user_id:
                 # Reject if ASD confidence is too low — user is in view but not actually speaking
-                if best_score < 0.25:
+                if best_score < 0.20:
                     if self.config.debug:
-                        print(f"[REJECT] Target visible but ASD too low ({best_score:.2f}) — not speaking")
+                        print(f"[REJECT] Target visible but ASD score too low ({best_score:.2f}) — not speaking")
                     return VerifyOutput(
                         result=VerifyResult.REJECT,
                         text=transcript.text,
@@ -355,21 +355,23 @@ class SpeakerVerifier:
         # Collect all speaking probabilities per face in the window
         face_probs = defaultdict(list)
         
+        window_frame_count = 0
         for timestamp, results in asd_history:
             if window_start <= timestamp <= window_end:
+                window_frame_count += 1
                 for result in results:
-                    # Require actual is_speaking flag — probability alone causes false positives
-                    # for faces that are in view but not talking (resting face movement)
-                    if result.is_speaking and result.probability > 0.25:
+                    if result.is_speaking or result.probability > 0.3:
                         face_probs[result.track_id].append(result.probability)
-        
+
         # Calculate average speaking score for each face
+        # speaking_ratio uses WINDOW frames only (not all history) — gives a real
+        # consistency signal: someone talking fills most of the window; a false
+        # positive resting face only fires on a handful of frames.
         speaking_scores = {}
         for track_id, probs in face_probs.items():
             if probs:
-                # Use a weighted score: higher if spoke more often AND with higher confidence
                 avg_prob = sum(probs) / len(probs)
-                speaking_ratio = len(probs) / max(len(asd_history), 1)
+                speaking_ratio = len(probs) / max(window_frame_count, 1)
                 speaking_scores[track_id] = avg_prob * (0.5 + 0.5 * speaking_ratio)
         
         return speaking_scores
