@@ -181,7 +181,7 @@ class JackieWebSocketServer:
         
         if cmd_type == "ping":
             await websocket.send(json.dumps({"type": "pong", "time": time.time()}))
-        elif cmd_type == "config":
+        elif cmd_type == "get_config":
             await websocket.send(json.dumps({
                 "type": "config",
                 "audio_rate": 16000,
@@ -189,6 +189,24 @@ class JackieWebSocketServer:
                 "video_height": 720,
                 "use_cae": True
             }))
+        elif cmd_type == "config":
+            from smait.core.config import get_config
+            cfg = get_config()
+            if "vad_threshold" in cmd:
+                cfg.audio.vad_threshold = float(cmd["vad_threshold"])
+                # Live-update the VAD instance if audio pipeline is running
+                from smait.sensors.audio_pipeline import get_audio_pipeline
+                pipeline = get_audio_pipeline()
+                if pipeline and pipeline.vad:
+                    pipeline.vad.threshold = cfg.audio.vad_threshold
+                print(f"[CONFIG] VAD threshold → {cfg.audio.vad_threshold:.2f}")
+            if "asd_min_score" in cmd:
+                cfg.vision.asd_min_score = float(cmd["asd_min_score"])
+                print(f"[CONFIG] ASD min score → {cfg.vision.asd_min_score:.2f}")
+            if "session_timeout" in cmd:
+                cfg.session.timeout_seconds = int(cmd["session_timeout"])
+                print(f"[CONFIG] Session timeout → {cfg.session.timeout_seconds}s")
+            await websocket.send(json.dumps({"type": "config_ack", "status": "ok"}))
         elif cmd_type == "doa":
             # Direction of Arrival from CAE SDK
             angle = cmd.get("angle", 0)

@@ -258,7 +258,7 @@ class SpeakerVerifier:
         if self.target_user_id is not None:
             if best_speaker_id == self.target_user_id:
                 # Reject if ASD confidence is too low — user is in view but not actually speaking
-                if best_score < 0.20:
+                if best_score < self.config.vision.asd_min_score:
                     if self.config.debug:
                         print(f"[REJECT] Target visible but ASD score too low ({best_score:.2f}) — not speaking")
                     return VerifyOutput(

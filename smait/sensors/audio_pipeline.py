@@ -404,3 +404,18 @@ class AudioPipeline:
     def get_recent_audio(self, seconds: float = 2.0) -> np.ndarray:
         """Get the most recent N seconds of audio"""
         return self.ring_buffer.get_last_seconds(seconds)
+
+
+# Global audio pipeline instance for live config updates
+_audio_pipeline: 'AudioPipeline | None' = None
+
+
+def set_audio_pipeline(pipeline: 'AudioPipeline'):
+    """Register the global audio pipeline instance"""
+    global _audio_pipeline
+    _audio_pipeline = pipeline
+
+
+def get_audio_pipeline() -> 'AudioPipeline | None':
+    """Get the global audio pipeline instance"""
+    return _audio_pipeline

@@ -94,6 +94,7 @@ class VisionConfig:
     speaker_detection_backend: SpeakerDetectionBackend = SpeakerDetectionBackend.LASER
     asd_model_path: Optional[str] = None  # Path to ASD model (LASER or Light-ASD)
     asd_threshold: float = 0.5       # Active speaker probability threshold
+    asd_min_score: float = 0.20      # Minimum ASD score to accept speech as genuine
     
     # LASER-specific settings
     laser_use_landmarks: bool = True  # Use MediaPipe landmarks (recommended)
@@ -109,9 +110,9 @@ class VisionConfig:
 @dataclass
 class SessionConfig:
     """Session management configuration"""
-    timeout_seconds: float = 45.0              # More generous silence timeout
-    face_lost_grace_seconds: float = 10.0      # 10s grace before ending (was 5)
-    reacquisition_window_seconds: float = 15.0  # Window to re-find user
+    timeout_seconds: float = 30.0              # 30s silence → end session (demo: people move on fast)
+    face_lost_grace_seconds: float = 8.0       # 8s grace when user walks away
+    reacquisition_window_seconds: float = 20.0  # 20s window to re-find user (quick return)
     min_engagement_confidence: float = 0.3
     
     # Enrollment (legacy, will be replaced by implicit detection)
@@ -133,13 +134,16 @@ class DialogueConfig:
     
     # System prompt
     system_prompt: str = (
-        "You are 'Jackie', a friendly service robot at SJSU (San Jose State University). "
-        "You greet visitors, answer questions, and help with directions. "
-        "Keep responses short (1-3 sentences) — you're speaking out loud, not typing. "
-        "Be warm, natural, and slightly playful. Never say 'As an AI' or 'I don't have feelings.' "
-        "If the message is garbled or unclear, just say 'Sorry, could you say that again?' "
-        "IMPORTANT: Your responses will be spoken through TTS, so keep them conversational "
-        "and avoid bullet points, lists, or markdown formatting."
+        "You are 'Jackie', an AI-powered service robot being demonstrated at SJSU's ME department open lab event on March 2nd. "
+        "You are a research project showcasing multimodal Human-Robot Interaction — "
+        "you can see faces, detect who is speaking, understand speech, and hold real conversations. "
+        "Keep responses to 1-3 spoken sentences max. Be warm, natural, and slightly playful. "
+        "Never say 'As an AI' — you ARE a robot, own it with personality. "
+        "If someone asks what you can do: mention you use computer vision, audio-visual speaker detection, "
+        "and a language model to respond in real time. "
+        "If someone asks who made you: say a robotics master's student here at SJSU. "
+        "NOISY CROWD: If speech seems garbled, say 'Sorry, it's a bit noisy — could you repeat that?' "
+        "FORMATTING: Plain spoken sentences only. No lists, no markdown, no special characters."
     )
     
     # TTS (future)
