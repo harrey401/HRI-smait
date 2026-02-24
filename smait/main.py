@@ -105,8 +105,6 @@ class HRISystem:
         self._last_greeting_time: float = 0
         self._greeting_cooldown: float = 25.0  # Min seconds between greetings (prevents re-greet on track_id reassignment)
 
-        # Echo suppression: ignore ASR input while robot is speaking
-        self._speaking_until: float = 0.0  # epoch time until which mic input is muted
     
     async def start(self):
         """Initialize and start the HRI system"""
@@ -375,7 +373,6 @@ class HRISystem:
                 tts_result = await self.tts_engine.synthesize(greeting)
                 if self.config.debug:
                     print(f"        (TTS: {tts_result.latency_ms:.0f}ms)")
-                self._speaking_until = time.time() + (tts_result.duration_ms / 1000.0) + 0.8
                 asyncio.create_task(self.tts_player.play_async(tts_result))
         except Exception as e:
             print(f"[GREET] Error: {e}")
@@ -426,11 +423,6 @@ class HRISystem:
         if not text:
             return
 
-        # === Echo suppression: drop input while robot is speaking ===
-        if time.time() < self._speaking_until:
-            if self.config.debug:
-                print(f"[ECHO] Dropped (robot speaking): \"{text[:40]}\"")
-            return
 
         # === Hallucination filter ===
         # Parakeet returns raw scores (99–104 range), not 0–1, so the confidence
@@ -502,7 +494,6 @@ class HRISystem:
                 _jackie_server.send_tts(response.text)
                 # Estimate mute duration from text length (~2.5 words/sec speech rate + 1s buffer)
                 _est_duration = len(response.text.split()) / 2.5 + 1.0
-                self._speaking_until = max(self._speaking_until, time.time() + _est_duration)
 
             # Also play TTS locally (for testing without robot)
             if self.tts_engine and self.tts_player:
@@ -511,7 +502,6 @@ class HRISystem:
                     if self.config.debug:
                         print(f"        (TTS: {tts_result.latency_ms:.0f}ms)")
                     # Mute mic for TTS duration + 1s (covers both local playback and Jackie's speaker echo)
-                    self._speaking_until = time.time() + (tts_result.duration_ms / 1000.0) + 1.0
                     asyncio.create_task(self.tts_player.play_async(tts_result))
                 except Exception as e:
                     print(f"[TTS] Error: {e}")
@@ -585,7 +575,6 @@ class HRISystem:
                     print(f"[ROBOT] {farewell} (timeout farewell)")
                     if self.tts_engine and self.tts_player:
                         tts_result = await self.tts_engine.synthesize(farewell)
-                        self._speaking_until = time.time() + (tts_result.duration_ms / 1000.0) + 1.0
                         asyncio.create_task(self.tts_player.play_async(tts_result))
                 except Exception as e:
                     print(f"[TTS] Farewell error: {e}")
