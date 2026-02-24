@@ -103,7 +103,7 @@ class HRISystem:
         # Proactive greeting
         self._greeted_users: set = set()  # Track users we've already greeted
         self._last_greeting_time: float = 0
-        self._greeting_cooldown: float = 5.0  # Min seconds between greetings
+        self._greeting_cooldown: float = 25.0  # Min seconds between greetings (prevents re-greet on track_id reassignment)
     
     async def start(self):
         """Initialize and start the HRI system"""
@@ -421,7 +421,26 @@ class HRISystem:
         
         if not text:
             return
-        
+
+        # === Hallucination filter ===
+        # Parakeet returns raw scores (99–104 range), not 0–1, so the confidence
+        # gate is unreliable. Filter short filler words / silence artifacts here.
+        _FILLER_WORDS = {
+            "yeah", "yep", "okay", "ok", "uh", "um", "hmm", "huh",
+            "ah", "oh", "and", "and uh", "i", "the", "a", "so", "right",
+            "sure", "no", "yes", "hey", "hi", "bye", "thanks", "thank you",
+        }
+        text_lower = text.lower().strip(".,!? ")
+        word_count = len(text_lower.split())
+        if word_count <= 1 and text_lower in _FILLER_WORDS:
+            if self.config.debug:
+                print(f"[FILTER] Dropped filler: \"{text}\"")
+            return
+        if len(text) < 4:
+            if self.config.debug:
+                print(f"[FILTER] Dropped too short: \"{text}\"")
+            return
+
         start_time = time.time()
         self._total_turns += 1
         
@@ -486,6 +505,7 @@ class HRISystem:
             if self.verifier.check_pending_session_end():
                 self.dialogue.reset_session()
                 self._greeted_users.clear()
+                self._last_greeting_time = time.time()  # block re-greet on track_id reassign
                 if BT_AVAILABLE and self.behavior_tree:
                     bb = get_blackboard()
                     bb.session_state = SessionState.IDLE
@@ -556,6 +576,7 @@ class HRISystem:
                 
                 self.dialogue.reset_session()
                 self._greeted_users.clear()
+                self._last_greeting_time = time.time()  # block re-greet on track_id reassign
 
                 # Reset BT state
                 if BT_AVAILABLE and self.behavior_tree:
