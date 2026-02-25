@@ -9,3 +9,9 @@ logs/
 docs/spec-page*
 docs/hardware-sdk/
 mockup*
+
+# Private hardware specs
+docs/JACKIE_HARDWARE.md
+docs/jackie-spec-sheet.pdf
+docs/*hardware*
+docs/*spec-sheet*
