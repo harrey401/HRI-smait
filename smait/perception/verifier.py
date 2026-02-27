@@ -306,7 +306,7 @@ class SpeakerVerifier:
                 # Check if target user also spoke (might be overlapping speech)
                 if self.target_user_id in speaking_scores:
                     target_score = speaking_scores[self.target_user_id]
-                    if target_score > 0.3:  # Target also spoke
+                    if target_score > 0.2:  # Target also spoke (matches asd_min_score)
                         self.last_activity = time.time()
                         self.turn_count += 1
                         
@@ -360,7 +360,7 @@ class SpeakerVerifier:
             if window_start <= timestamp <= window_end:
                 window_frame_count += 1
                 for result in results:
-                    if result.is_speaking or result.probability > 0.3:
+                    if result.is_speaking or result.probability > 0.2:
                         face_probs[result.track_id].append(result.probability)
 
         # Calculate average speaking score for each face

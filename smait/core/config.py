@@ -48,7 +48,7 @@ class AudioConfig:
     chunk_duration_ms: int = 30      # VAD chunk size
     buffer_seconds: float = 30.0     # Ring buffer duration
     vad_threshold: float = 0.5       # Voice activity threshold
-    silence_duration_ms: int = 500   # Silence before end-of-utterance
+    silence_duration_ms: int = 1000  # Silence before end-of-utterance (was 500, bumped for slow speakers + Parakeet segment quality)
     min_speech_duration_ms: int = 250  # Minimum speech to process
 
 
