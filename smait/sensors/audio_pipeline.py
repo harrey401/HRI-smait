@@ -12,7 +12,7 @@ import threading
 import time
 from collections import deque
 from dataclasses import dataclass
-from typing import Optional, AsyncIterator, Callable, List, Tuple
+from typing import Optional, AsyncIterator, Callable, List
 import numpy as np
 
 from smait.core.config import get_config
@@ -257,14 +257,6 @@ class AudioPipeline:
         self._speech_chunks: List[np.ndarray] = []
         self._silence_samples = 0
         
-        # Pre-roll: keep last N ms of audio before VAD triggers
-        # so we don't lose the first word of an utterance
-        self._pre_roll_ms = 300  # 300ms pre-roll buffer
-        self._pre_roll_chunks: List[Tuple[np.ndarray, float]] = []
-        self._pre_roll_max_samples = int(
-            self.config.audio.sample_rate * self._pre_roll_ms / 1000
-        )
-        
         # Output queue for async iteration
         self._segment_queue: asyncio.Queue = asyncio.Queue(maxsize=50)
         
@@ -345,20 +337,11 @@ class AudioPipeline:
             # Speech segment detection state machine
             if is_speech:
                 if not self._in_speech:
-                    # Speech start — prepend pre-roll buffer to capture
-                    # the first word that VAD missed during detection delay
+                    # Speech start
                     self._in_speech = True
+                    self._speech_start_time = timestamp
+                    self._speech_chunks = []
                     self._silence_samples = 0
-                    
-                    # Build pre-roll audio and set accurate start time
-                    if self._pre_roll_chunks:
-                        pre_roll_audio = [chunk for chunk, _ in self._pre_roll_chunks]
-                        self._speech_start_time = self._pre_roll_chunks[0][1]
-                        self._speech_chunks = pre_roll_audio
-                        self._pre_roll_chunks = []
-                    else:
-                        self._speech_start_time = timestamp
-                        self._speech_chunks = []
                     
                     # Callback for ASD synchronization
                     if self._on_speech_start:
@@ -399,14 +382,6 @@ class AudioPipeline:
                         self._in_speech = False
                         self._speech_start_time = None
                         self._speech_chunks = []
-                else:
-                    # Not in speech — maintain pre-roll buffer
-                    self._pre_roll_chunks.append((audio, timestamp))
-                    # Trim to max pre-roll size
-                    total_samples = sum(len(c) for c, _ in self._pre_roll_chunks)
-                    while total_samples > self._pre_roll_max_samples and self._pre_roll_chunks:
-                        removed, _ = self._pre_roll_chunks.pop(0)
-                        total_samples -= len(removed)
     
     async def speech_segments(self) -> AsyncIterator[SpeechSegment]:
         """Async iterator yielding speech segments"""
