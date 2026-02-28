@@ -8,6 +8,7 @@ Features:
 """
 
 import asyncio
+import os
 import threading
 import time
 from collections import deque
@@ -256,6 +257,12 @@ class AudioPipeline:
         self._speech_start_time: Optional[float] = None
         self._speech_chunks: List[np.ndarray] = []
         self._silence_samples = 0
+        self._speech_samples = 0  # DIAG: track actual speech samples in segment
+        
+        # Diagnostics: save raw audio segments for debugging
+        self._diag_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'diag_audio')
+        os.makedirs(self._diag_dir, exist_ok=True)
+        self._diag_segment_count = 0
         
         # Output queue for async iteration
         self._segment_queue: asyncio.Queue = asyncio.Queue(maxsize=50)
@@ -342,12 +349,14 @@ class AudioPipeline:
                     self._speech_start_time = timestamp
                     self._speech_chunks = []
                     self._silence_samples = 0
+                    self._speech_samples = 0
                     
                     # Callback for ASD synchronization
                     if self._on_speech_start:
                         self._on_speech_start()
                 
                 self._speech_chunks.append(audio)
+                self._speech_samples += len(audio)
                 self._silence_samples = 0
                 
             else:
@@ -359,6 +368,37 @@ class AudioPipeline:
                     if self._silence_samples >= silence_threshold_samples:
                         # End of speech segment
                         speech_audio = np.concatenate(self._speech_chunks)
+                        
+                        # === DIAGNOSTICS ===
+                        seg_duration_ms = len(speech_audio) / self.config.audio.sample_rate * 1000
+                        speech_ms = self._speech_samples / self.config.audio.sample_rate * 1000
+                        silence_ms = self._silence_samples / self.config.audio.sample_rate * 1000
+                        self._diag_segment_count += 1
+                        seg_id = self._diag_segment_count
+                        
+                        print(f"[DIAG-VAD] Segment #{seg_id}: "
+                              f"total={seg_duration_ms:.0f}ms, "
+                              f"speech={speech_ms:.0f}ms, "
+                              f"trailing_silence={silence_ms:.0f}ms, "
+                              f"chunks={len(self._speech_chunks)}")
+                        
+                        # Save raw audio as WAV for playback debugging
+                        try:
+                            import wave
+                            wav_path = os.path.join(self._diag_dir, f"seg_{seg_id:04d}_{seg_duration_ms:.0f}ms.wav")
+                            with wave.open(wav_path, 'wb') as wf:
+                                wf.setnchannels(1)
+                                wf.setsampwidth(2)  # int16
+                                wf.setframerate(self.config.audio.sample_rate)
+                                if speech_audio.dtype != np.int16:
+                                    speech_audio_save = (speech_audio * 32768).astype(np.int16)
+                                else:
+                                    speech_audio_save = speech_audio
+                                wf.writeframes(speech_audio_save.tobytes())
+                            print(f"[DIAG-VAD] Saved: {wav_path}")
+                        except Exception as e:
+                            print(f"[DIAG-VAD] Failed to save WAV: {e}")
+                        # === END DIAGNOSTICS ===
                         
                         # Callback for ASD synchronization
                         if self._on_speech_end:
@@ -377,6 +417,8 @@ class AudioPipeline:
                                 self._segment_queue.put_nowait(segment)
                             except asyncio.QueueFull:
                                 pass  # Drop if queue full
+                        else:
+                            print(f"[DIAG-VAD] Segment #{seg_id} DROPPED (below min_speech {self.config.audio.min_speech_duration_ms}ms)")
                         
                         # Reset state
                         self._in_speech = False
