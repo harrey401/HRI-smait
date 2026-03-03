@@ -322,12 +322,19 @@ class AudioPipeline:
             self.config.audio.min_speech_duration_ms / 1000
         )
         
+        _read_count = 0
         while self._running:
             # Read audio chunk
             audio = self.source.read_nonblocking()
             if audio is None or len(audio) == 0:
                 time.sleep(0.01)
                 continue
+            
+            _read_count += 1
+            if _read_count % 500 == 1:
+                rms = np.sqrt(np.mean(audio.astype(np.float32) ** 2))
+                print(f"[AUDIO-DBG] read #{_read_count}: {len(audio)} samples, "
+                      f"dtype={audio.dtype}, min={audio.min()}, max={audio.max()}, rms={rms:.1f}")
             
             timestamp = time.time()
             
@@ -336,6 +343,9 @@ class AudioPipeline:
             
             # Run VAD
             is_speech, prob = self.vad.process_chunk(audio)
+            
+            if _read_count % 500 == 1:
+                print(f"[AUDIO-DBG] VAD: is_speech={is_speech}, prob={prob:.3f}, threshold={self.vad.threshold}")
             
             # Callback for UI
             if self._on_vad_change:
