@@ -275,7 +275,16 @@ class HRISystem:
                     continue
                 
                 # Process frame through verifier
+                # Track state before so we can detect session-end transitions
+                _prev_verifier_state = self.verifier.state
                 result = self.verifier.process_frame(frame)
+
+                # Detect face-lost session end (verifier went IDLE internally,
+                # e.g. user walked away — these paths don't call send_state)
+                if (_prev_verifier_state != SessionState.IDLE
+                        and self.verifier.state == SessionState.IDLE
+                        and _jackie_server):
+                    _jackie_server.send_state("idle")
                 
                 # Update BT blackboard with current state
                 if BT_AVAILABLE and self.behavior_tree:
