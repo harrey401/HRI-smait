@@ -34,6 +34,7 @@ from smait.perception.verifier import SpeakerVerifier
 from smait.perception.semantic_vad import SemanticVAD, TurnTakingManager
 from smait.dialogue.manager import DialogueManager
 from smait.output.tts import EdgeTTSEngine, PiperTTSEngine, TTSPlayer
+from smait.utils.data_logger import init_data_logger, get_data_logger, TurnData, EngagementInfo
 
 # Behavior tree imports
 try:
@@ -178,6 +179,10 @@ class HRISystem:
                 dialogue=self.dialogue
             )
         
+        # Data logger for structured session logging
+        self._data_logger = init_data_logger(output_dir="logs/march3")
+        print("[DATA-LOG] Session logger ready → logs/march3/")
+
         # Start components
         print("[SYSTEM] Starting components...")
         self.audio_pipeline.start()
@@ -295,6 +300,19 @@ class HRISystem:
                                 self._last_greeting_time = time.time()
                                 # Start session and greet
                                 self.verifier._start_session(face.track_id)
+                                # Log session start
+                                dl = get_data_logger()
+                                if dl:
+                                    dl.start_session(
+                                        engagement=EngagementInfo(
+                                            proximity_m=0.0,
+                                            face_area=face.bbox.area,
+                                            attention_ok=engagement.attention_ok,
+                                            proximity_ok=engagement.proximity_ok,
+                                            greeting_type="proactive",
+                                        ),
+                                        proactive_greeting=True,
+                                    )
                                 asyncio.run_coroutine_threadsafe(
                                     self._proactive_greet(),
                                     self._loop
@@ -506,7 +524,9 @@ class HRISystem:
                 self._early_predictions += 1
             
             # Generate response
+            asr_end = time.time()
             response = await self.dialogue.ask_async(text, transcript.confidence)
+            llm_end = time.time()
 
             response_time = (time.time() - start_time) * 1000
             self._response_times.append(response_time)
@@ -514,6 +534,21 @@ class HRISystem:
             print(f"[ROBOT] {response.text}")
             if self.config.debug:
                 print(f"        (latency: {response_time:.0f}ms)")
+
+            # Log turn to data logger
+            dl = get_data_logger()
+            if dl:
+                dl.log_turn(TurnData(
+                    user_text=text,
+                    asr_confidence=transcript.confidence,
+                    asr_latency_ms=(asr_end - start_time) * 1000,
+                    asd_score=verification.confidence,
+                    verification_result=verification.result.name,
+                    verification_reason=verification.reason or "",
+                    robot_text=response.text,
+                    llm_latency_ms=(llm_end - asr_end) * 1000,
+                    total_response_time_ms=response_time,
+                ))
 
             # Send response to Jackie app (for display + TTS on robot)
             if _jackie_server:
@@ -535,6 +570,9 @@ class HRISystem:
 
             # Check if session should end (user said goodbye)
             if self.verifier.check_pending_session_end():
+                dl = get_data_logger()
+                if dl:
+                    dl.end_session(reason="farewell")
                 self.dialogue.reset_session()
                 self._greeted_users.clear()
                 self._last_greeting_time = time.time()  # block re-greet on track_id reassign
@@ -553,6 +591,13 @@ class HRISystem:
             # Only print rejection if debug AND it's a real rejection (not just noise)
             if self.config.debug and len(text) > 5:
                 print(f"[REJECT] \"{text[:40]}\" - {verification.reason}")
+            dl = get_data_logger()
+            if dl and len(text) > 5:
+                dl.log_rejected_transcript(
+                    text=text, reason=verification.reason or "rejected",
+                    asd_score=verification.confidence,
+                    is_wrong_speaker=True,
+                )
             self._preparing_response = False
             self._early_response_text = None
         
@@ -589,6 +634,9 @@ class HRISystem:
             
             if self.verifier and self.verifier.check_timeout():
                 print("[SESSION] Timeout - session ended")
+                dl = get_data_logger()
+                if dl:
+                    dl.end_session(reason="timeout")
                 
                 # Say goodbye before ending
                 try:

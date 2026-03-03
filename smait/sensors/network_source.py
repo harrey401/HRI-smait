@@ -116,8 +116,13 @@ class JackieWebSocketServer:
         addr = websocket.remote_address
         print(f"[JACKIE] Client connected: {addr}")
         
+        _msg_count = 0
+        _audio_count = 0
         try:
             async for message in websocket:
+                _msg_count += 1
+                if _msg_count % 500 == 1:
+                    print(f"[JACKIE] msg #{_msg_count}: type={'binary' if isinstance(message, bytes) else 'text'}, len={len(message)}, audio_src={self.audio_source is not None}")
                 if isinstance(message, bytes):
                     # Binary message - efficient protocol (0x01=audio, 0x02=video)
                     if len(message) > 0:
@@ -125,6 +130,9 @@ class JackieWebSocketServer:
                         payload = message[1:]
                         
                         if msg_type == 0x01 and self.audio_source:
+                            _audio_count += 1
+                            if _audio_count % 500 == 1:
+                                print(f"[JACKIE] audio #{_audio_count}: {len(payload)} bytes")
                             self.audio_source.push_audio(payload)
                         elif msg_type == 0x02 and self.video_source:
                             import cv2
