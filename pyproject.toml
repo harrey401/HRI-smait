@@ -1,0 +1,93 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "smait-hri"
+version = "2.0.0"
+description = "Multimodal Human-Robot Interaction System for Service Robots"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "Harreynish Gowtham Sarav Saravanan", email = "your.email@example.com"}
+]
+keywords = [
+    "robotics",
+    "human-robot-interaction",
+    "hri",
+    "speech-recognition",
+    "active-speaker-detection",
+    "service-robots",
+    "ros2",
+    "isaac-sim"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Human Machine Interfaces",
+]
+dependencies = [
+    "numpy>=1.24.0",
+    "opencv-python>=4.8.0",
+    "sounddevice>=0.4.6",
+    "soundfile>=0.12.1",
+    "faster-whisper>=1.0.0",
+    "torch>=2.0.0",
+    "mediapipe>=0.10.0",
+    "openai>=1.0.0",
+    "requests>=2.31.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+]
+aws = [
+    "amazon-transcribe>=0.6.0",
+]
+onnx = [
+    "onnxruntime>=1.16.0",
+    "onnx>=1.15.0",
+]
+
+[project.scripts]
+smait = "smait.main:run"
+smait-demo = "smait.demo:run"
+
+[project.urls]
+Homepage = "https://github.com/yourusername/smait-hri"
+Documentation = "https://github.com/yourusername/smait-hri#readme"
+Repository = "https://github.com/yourusername/smait-hri.git"
+Issues = "https://github.com/yourusername/smait-hri/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["smait*"]
+
+[tool.setuptools.package-data]
+smait = ["*.yaml", "*.json"]
+
+[tool.black]
+line-length = 100
+target-version = ['py310', 'py311', 'py312']
+
+[tool.ruff]
+line-length = 100
+select = ["E", "F", "W", "I", "N", "UP"]
+ignore = ["E501"]  # Line too long (handled by black)
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
