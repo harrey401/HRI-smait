@@ -12,6 +12,7 @@ import torch
 
 from smait.core.config import Config
 from smait.core.events import EventBus, EventType
+from smait.sensors.aec import SoftwareAEC
 
 logger = logging.getLogger(__name__)
 
@@ -155,6 +156,9 @@ class AudioPipeline:
         # CAE status (updated via CAE_STATUS events)
         self._cae_status: dict = {"aec": False, "beamforming": False, "noise_suppression": False}
 
+        # Software AEC (fallback when hardware CAE AEC is not active)
+        self._aec = SoftwareAEC(sample_rate=config.audio.sample_rate)
+
         # Silero VAD
         self._vad_model: Optional[torch.nn.Module] = None
         self._vad_threshold = config.audio.vad_threshold
@@ -204,7 +208,7 @@ class AudioPipeline:
             return
 
         # Apply software AEC if hardware AEC is not active
-        if hasattr(self, "_aec") and self._aec.available and not self._cae_status.get("aec", False):
+        if self._aec.available and not self._cae_status.get("aec", False):
             processed = self._aec.process_near(data)
             if processed:
                 data = processed
@@ -322,8 +326,7 @@ class AudioPipeline:
         """Return to normal listening mode after TTS playback."""
         self._tts_playing = False
         self._tts_start_time = None
-        if hasattr(self, "_aec"):
-            self._aec.reset()
+        self._aec.reset()
         logger.debug("Normal listening mode (TTS end)")
 
     def _on_cae_status(self, data: object) -> None:
@@ -334,8 +337,6 @@ class AudioPipeline:
 
     def _on_tts_audio_chunk(self, data: object) -> None:
         """Feed TTS audio chunks to the software AEC as far-end reference."""
-        if not hasattr(self, "_aec"):
-            return
         if isinstance(data, dict):
             pcm_bytes = data.get("audio")
             if isinstance(pcm_bytes, (bytes, bytearray)):
