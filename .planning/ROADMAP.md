@@ -128,11 +128,12 @@ Plans:
   4. App receives 0x05 TTS frames and plays via AudioTrack
   5. Server demuxes all streams and DOA without errors (verified in lab)
 
-**Plans:** 2/2 plans complete
+**Plans:** 3 plans (2 complete, 1 gap closure pending)
 
 Plans:
-- [ ] 06-01-PLAN.md — CaeAudioManager with fixed channel adapter, dual stream (0x01+0x03), JSON DOA, MainActivity wiring
-- [ ] 06-02-PLAN.md — TtsAudioPlayer AudioTrack 24kHz PCM16 playback, binary WebSocket handler for 0x05 frames
+- [x] 06-01-PLAN.md — CaeAudioManager with fixed channel adapter, dual stream (0x01+0x03), JSON DOA, MainActivity wiring
+- [x] 06-02-PLAN.md — TtsAudioPlayer AudioTrack 24kHz PCM16 playback, binary WebSocket handler for 0x05 frames
+- [ ] 06-03-PLAN.md — Gap closure: run Gradle build and unit tests in lab (JDK required)
 
 ### Phase 7: GPU Validation & Model Loading
 **Goal**: All models verified on RTX 5070 Blackwell sm_120, VRAM budget confirmed, Parakeet ASR tested
@@ -183,6 +184,6 @@ Phase 6 (Android) code can be written alongside Phases 2-5, but hardware testing
 | 3. Vision Pipeline Code | 2/2 | Complete   | 2026-03-10 | - |
 | 4. Speaker Separation Code | 2/2 | Complete   | 2026-03-10 | - |
 | 5. Turn-Taking & AEC Code | 2/2 | Complete   | 2026-03-10 | - |
-| 6. Android Audio Pipeline | 2/2 | Complete   | 2026-03-10 | - |
+| 6. Android Audio Pipeline | 2/3 | Gap closure pending | 2026-03-10 | - |
 | 7. GPU Validation & Model Loading | LAB | 0/2 | Not started | - |
 | 8. Full Integration & Quality | LAB | 0/3 | Not started | - |
