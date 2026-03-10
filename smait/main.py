@@ -217,10 +217,19 @@ class HRISystem:
                     segment.end_time,
                 )
 
-            # Run separation
-            channels = self._config.audio.channels_raw if segment.raw_audio is not None else 1
-            audio = segment.raw_audio if segment.raw_audio is not None else segment.cae_audio
-            separation = await self.dolphin_separator.separate(audio, lip_frames, channels)
+            # Fallback: if initial lip frame lookup found nothing, try recent frames
+            if not lip_frames and self.lip_extractor:
+                lip_frames = self.lip_extractor.get_recent_frames(
+                    self.session.target_track_id, count=25
+                )
+
+            # Run separation — always pass CAE mono audio (channels=1)
+            # Dolphin takes mono [1, samples]; raw 4-channel would be wrong input
+            separation = await self.dolphin_separator.separate(
+                segment.cae_audio,   # Always CAE mono for Dolphin
+                lip_frames,
+                channels=1,
+            )
 
             sep_ms = self.metrics.stop_timer("separation")
             self.metrics.record("separation_confidence", separation.separation_confidence * 100)

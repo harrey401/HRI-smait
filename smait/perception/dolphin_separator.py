@@ -94,7 +94,7 @@ class DolphinSeparator:
         self,
         audio: np.ndarray,
         lip_frames: list[LipROI],
-        channels: int = 4,
+        channels: int = 1,
     ) -> SeparationResult:
         """Run audio-visual target speaker extraction.
 
@@ -110,6 +110,10 @@ class DolphinSeparator:
 
         if not self._available or self._model is None:
             # Fallback: return audio as-is (CAE-processed is already somewhat clean)
+            return self._passthrough(audio, channels, start)
+
+        if not lip_frames:
+            logger.debug("No lip frames for target speaker — using CAE passthrough")
             return self._passthrough(audio, channels, start)
 
         try:
@@ -148,35 +152,28 @@ class DolphinSeparator:
         audio_tensor = torch.from_numpy(mono_float32).unsqueeze(0).to(self._device)
 
         # Prepare lip video tensor — [1, 1, T, 88, 88, 1] grayscale
-        if lip_frames:
-            # Convert each RGB lip ROI to grayscale and resize to 88x88
-            grayscale_frames = []
-            for roi in lip_frames:
-                img = roi.image  # RGB uint8 (H, W, 3)
-                # Convert RGB to grayscale
-                gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)  # (H, W)
-                # Resize to 88x88
-                gray = cv2.resize(gray, (88, 88), interpolation=cv2.INTER_LINEAR)
-                grayscale_frames.append(gray)
+        # lip_frames is guaranteed non-empty here (separate() exits early otherwise)
+        grayscale_frames = []
+        for roi in lip_frames:
+            img = roi.image  # RGB uint8 (H, W, 3)
+            # Convert RGB to grayscale
+            gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)  # (H, W)
+            # Resize to 88x88
+            gray = cv2.resize(gray, (88, 88), interpolation=cv2.INTER_LINEAR)
+            grayscale_frames.append(gray)
 
-            # Stack frames: [T, 88, 88]
-            lip_stack = np.stack(grayscale_frames, axis=0)
-            # Add channel dim: [T, 88, 88, 1]
-            lip_stack = lip_stack[..., np.newaxis]
-            # Add batch and group dims: [1, 1, T, 88, 88, 1]
-            video_tensor = torch.from_numpy(
-                lip_stack[np.newaxis, np.newaxis]
-            ).float().to(self._device)
-        else:
-            # No lip frames — None (Dolphin can work audio-only with reduced quality)
-            video_tensor = None
+        # Stack frames: [T, 88, 88]
+        lip_stack = np.stack(grayscale_frames, axis=0)
+        # Add channel dim: [T, 88, 88, 1]
+        lip_stack = lip_stack[..., np.newaxis]
+        # Add batch and group dims: [1, 1, T, 88, 88, 1]
+        video_tensor = torch.from_numpy(
+            lip_stack[np.newaxis, np.newaxis]
+        ).float().to(self._device)
 
-        # Run model
-        with torch.no_grad():
-            if video_tensor is not None:
-                output = self._model(audio_tensor, video_tensor)
-            else:
-                output = self._model(audio_tensor)
+        # Run model — inference_mode is faster than no_grad (disables grad tracking entirely)
+        with torch.inference_mode():
+            output = self._model(audio_tensor, video_tensor)
 
         # Extract separated audio
         if isinstance(output, tuple):
