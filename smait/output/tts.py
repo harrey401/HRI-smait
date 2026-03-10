@@ -38,9 +38,10 @@ class TTSEngine:
     def __init__(self, config: Config, event_bus: EventBus) -> None:
         self._config = config.tts
         self._event_bus = event_bus
-        self._model = None
+        self._pipeline = None
         self._available = False
         self._sample_rate = config.tts.sample_rate
+        self._voice = getattr(config.tts, "voice", "af_heart")
 
         # Streaming state
         self._text_buffer = ""
@@ -50,14 +51,18 @@ class TTSEngine:
         """Load Kokoro-82M TTS model."""
         logger.info("Loading Kokoro-82M TTS model...")
         try:
-            from kokoro import KokoroTTS  # type: ignore[import-not-found]
-            self._model = KokoroTTS()
+            from kokoro import KPipeline  # type: ignore[import-not-found]
+            self._pipeline = KPipeline(lang_code="a")
             self._available = True
-            logger.info("Kokoro-82M loaded (sample_rate=%d)", self._sample_rate)
+            logger.info(
+                "Kokoro-82M loaded (voice=%s, sample_rate=%d)",
+                self._voice,
+                self._sample_rate,
+            )
         except ImportError:
             logger.warning(
                 "Kokoro TTS not installed. TTS will use Android fallback. "
-                "Install from: huggingface.co/hexgrad/Kokoro-82M"
+                "Install with: pip install kokoro>=0.9.4 soundfile && sudo apt install espeak-ng"
             )
         except Exception:
             logger.exception("Failed to load Kokoro model")
@@ -71,20 +76,21 @@ class TTSEngine:
 
         Returns PCM16 mono audio at 24kHz, or None if TTS is unavailable.
         """
-        if not self._available or self._model is None:
+        if not self._available or self._pipeline is None:
             return None
 
         try:
             t0 = time.monotonic()
-            audio = self._model.generate(text)
 
-            # Convert to int16 PCM bytes
-            if isinstance(audio, np.ndarray):
-                if audio.dtype == np.float32:
-                    audio = (audio * 32767).clip(-32768, 32767).astype(np.int16)
-                pcm_bytes = audio.tobytes()
-            else:
-                pcm_bytes = audio
+            pcm_parts = []
+            for _graphemes, _phonemes, audio in self._pipeline(
+                text, voice=self._voice, speed=1.0
+            ):
+                # audio is numpy float32 at 24kHz
+                pcm = (audio * 32767).clip(-32768, 32767).astype(np.int16)
+                pcm_parts.append(pcm.tobytes())
+
+            pcm_bytes = b"".join(pcm_parts)
 
             latency = (time.monotonic() - t0) * 1000
             logger.debug("TTS: '%s' -> %d bytes (%.1fms)",
