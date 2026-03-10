@@ -135,7 +135,7 @@ Deferred to future milestone. Tracked but not in current roadmap.
 | CONV-02 | Phase 8 | LAB | Pending |
 | CONV-03 | Phase 8 | LAB | Pending |
 | CONV-04 | Phase 8 | LAB | Pending |
-| QUAL-01 | Phase 1 | HOME | Pending |
+| QUAL-01 | Phase 1 | HOME | Complete |
 | QUAL-02 | Phase 8 | LAB | Pending |
 | QUAL-03 | Phase 8 | LAB | Pending |
 | QUAL-04 | Phase 8 | LAB | Pending |
