@@ -11,7 +11,7 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 - [ ] **ENV-01**: PyTorch nightly with CUDA 12.8+ verified on Blackwell sm_120
 - [ ] **ENV-02**: All ML models load simultaneously within 12GB VRAM budget
-- [ ] **ENV-03**: Dolphin AV-TSE vendored from source (not pip — no setup.py exists)
+- [x] **ENV-03**: Dolphin AV-TSE vendored from source (not pip — no setup.py exists)
 
 ### Audio Pipeline
 

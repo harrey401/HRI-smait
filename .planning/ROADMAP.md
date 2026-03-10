@@ -38,7 +38,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. L2CS-Net installed from maintained fork
   5. Unit tests with mocked models pass for all corrected stubs
 
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 
 Plans:
 - [ ] 01-01-PLAN.md — Vendor Dolphin, install dependencies, bootstrap test infrastructure, fix EventBus
@@ -169,7 +169,7 @@ Phase 6 (Android) code can be written alongside Phases 2-5, but hardware testing
 
 | Phase | Location | Plans Complete | Status | Completed |
 |-------|----------|----------------|--------|-----------|
-| 1. Dependency Setup & Stub API Fixes | HOME | 0/3 | Planning complete | - |
+| 1. Dependency Setup & Stub API Fixes | 1/3 | In Progress|  | - |
 | 2. TTS Pipeline Code | HOME | 0/2 | Not started | - |
 | 3. Vision Pipeline Code | HOME | 0/2 | Not started | - |
 | 4. Speaker Separation Code | HOME | 0/3 | Not started | - |

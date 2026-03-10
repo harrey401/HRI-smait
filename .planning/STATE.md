@@ -1,3 +1,19 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: planning
+stopped_at: Completed 01-dependency-setup-stub-api-fixes plan 01 (01-01-PLAN.md)
+last_updated: "2026-03-10T01:37:22.050Z"
+last_activity: 2026-03-09 -- Roadmap restructured for HOME/LAB split
+progress:
+  total_phases: 8
+  completed_phases: 0
+  total_plans: 3
+  completed_plans: 1
+  percent: 33
+---
+
 # Project State
 
 ## Project Reference
@@ -14,7 +30,7 @@ Plan: 0 of 3 in current phase
 Status: Ready to plan
 Last activity: 2026-03-09 -- Roadmap restructured for HOME/LAB split
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [███░░░░░░░] 33%
 
 ## Work Location
 
@@ -40,6 +56,7 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: -
 
 *Updated after each plan completion*
+| Phase 01-dependency-setup-stub-api-fixes P01 | 15 | 2 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -54,6 +71,9 @@ Recent decisions affecting current work:
 - [Roadmap]: AEC research in Phase 5 (replaces mic gating for barge-in support)
 - [Research]: Every stub API is wrong -- all need rewriting before model work
 - [Research]: Dolphin not pip-installable -- vendor source, import from look2hear.models
+- [Phase 01-dependency-setup-stub-api-fixes]: Vendor look2hear/ by copy into project root (git-tracked) rather than symlink — portable across machines
+- [Phase 01-dependency-setup-stub-api-fixes]: Use xfail markers for stub-correctness RED tests — Plans 02/03 will make them green
+- [Phase 01-dependency-setup-stub-api-fixes]: Fix EventBus stale loop by calling asyncio.get_running_loop() per-emit instead of caching self._loop
 
 ### Pending Todos
 
@@ -68,6 +88,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-09
-Stopped at: Roadmap restructured for HOME/LAB, ready to plan Phase 1
+Last session: 2026-03-10T01:37:22.049Z
+Stopped at: Completed 01-dependency-setup-stub-api-fixes plan 01 (01-01-PLAN.md)
 Resume file: None
