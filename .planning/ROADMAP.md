@@ -110,9 +110,11 @@ Plans:
   4. Barge-in logic written: detect user speech during TTS, stop TTS, resume listening
   5. Unit tests verify EOU timing, hallucination rejection, and barge-in state transitions
 
+**Plans:** 2 plans
+
 Plans:
-- [ ] 05-01: TBD
-- [ ] 05-02: TBD
+- [ ] 05-01-PLAN.md — Rewrite EOUDetector with VAD-prob silence tracking, hallucination filter tests + NeMo confidence
+- [ ] 05-02-PLAN.md — BARGE_IN event + barge-in VAD path in AudioPipeline, cancellable TTS, SoftwareAEC class
 
 ### Phase 6: Android Audio Pipeline
 **Goal**: Android app code updated for CAE beamforming, 3 streams, DOA, and AudioTrack TTS playback
