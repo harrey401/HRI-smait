@@ -4,7 +4,7 @@ milestone: v1.0
 milestone_name: milestone
 status: planning
 stopped_at: Completed 04-speaker-separation-code plan 02 (04-02-PLAN.md)
-last_updated: "2026-03-10T08:29:55.671Z"
+last_updated: "2026-03-10T08:33:06.300Z"
 last_activity: 2026-03-09 -- Roadmap restructured for HOME/LAB split
 progress:
   total_phases: 8
