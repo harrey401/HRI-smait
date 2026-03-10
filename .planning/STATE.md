@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 04-speaker-separation-code plan 02 (04-02-PLAN.md)
-last_updated: "2026-03-10T08:33:06.300Z"
+stopped_at: Completed 05-turn-taking-aec-code plan 01 (05-01-PLAN.md)
+last_updated: "2026-03-10T10:05:57.739Z"
 last_activity: 2026-03-09 -- Roadmap restructured for HOME/LAB split
 progress:
   total_phases: 8
   completed_phases: 4
-  total_plans: 9
-  completed_plans: 9
+  total_plans: 11
+  completed_plans: 10
   percent: 33
 ---
 
@@ -65,6 +65,7 @@ Progress: [███░░░░░░░] 33%
 | Phase 03-vision-pipeline-code P02 | 4min | 2 tasks | 2 files |
 | Phase 04-speaker-separation-code P01 | 2m42s | 2 tasks | 3 files |
 | Phase 04-speaker-separation-code P02 | 3m47s | 2 tasks | 3 files |
+| Phase 05-turn-taking-aec-code P01 | 4min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -98,6 +99,9 @@ Recent decisions affecting current work:
 - [Phase 04-speaker-separation-code]: main.py always passes segment.cae_audio to Dolphin with channels=1 — raw 4-channel is wrong input for Dolphin mono model
 - [Phase 04-speaker-separation-code]: Test face areas equalized (10000 each) so DOA angular proximity is the discriminating factor — original plan face areas (15000 vs 8000) were mathematically insufficient for the formula to produce the expected winner
 - [Phase 04-speaker-separation-code]: DOA scoring: max(0.5, 1.0 - angular_distance/90.0) with frame_width=640, camera_fov_deg=60; flat 1.2x bonus removed
+- [Phase 05-turn-taking-aec-code]: Hallucination filter runs before short confidence check — recognised phrases must always carry hallucination_phrase label
+- [Phase 05-turn-taking-aec-code]: _extract_confidence handles both list[Hypothesis] and single Hypothesis objects from NeMo transcribe()
+- [Phase 05-turn-taking-aec-code]: hard_cutoff_ms default changed from 1500 to 1800 to match vad_silence_ms threshold
 
 ### Pending Todos
 
@@ -112,6 +116,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-10T08:29:55.669Z
-Stopped at: Completed 04-speaker-separation-code plan 02 (04-02-PLAN.md)
+Last session: 2026-03-10T10:05:57.737Z
+Stopped at: Completed 05-turn-taking-aec-code plan 01 (05-01-PLAN.md)
 Resume file: None

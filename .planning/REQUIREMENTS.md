@@ -35,8 +35,8 @@ Requirements for this milestone. Each maps to roadmap phases.
 ### Speech Recognition
 
 - [ ] **ASR-01**: Parakeet TDT ASR verified on Blackwell sm_120 with CUDA graphs disabled
-- [ ] **ASR-02**: Hallucination filtering rejects phantom transcripts (confidence + phrase blocklist)
-- [ ] **ASR-03**: VAD-based end-of-utterance detection with ~1.8s silence threshold (replaces LiveKit EOU)
+- [x] **ASR-02**: Hallucination filtering rejects phantom transcripts (confidence + phrase blocklist)
+- [x] **ASR-03**: VAD-based end-of-utterance detection with ~1.8s silence threshold (replaces LiveKit EOU)
 
 ### Vision Pipeline
 
