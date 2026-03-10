@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 02-tts-pipeline-code plan 01 (02-01-PLAN.md)
-last_updated: "2026-03-10T07:18:31.868Z"
+stopped_at: Completed 03-vision-pipeline-code plan 01 (03-01-PLAN.md)
+last_updated: "2026-03-10T07:55:45.820Z"
 last_activity: 2026-03-09 -- Roadmap restructured for HOME/LAB split
 progress:
   total_phases: 8
   completed_phases: 2
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 7
+  completed_plans: 6
   percent: 33
 ---
 
@@ -61,6 +61,7 @@ Progress: [███░░░░░░░] 33%
 | Phase 01-dependency-setup-stub-api-fixes P03 | 4m18s | 2 tasks | 4 files |
 | Phase 02-tts-pipeline-code P02 | 2m13s | 1 tasks | 2 files |
 | Phase 02-tts-pipeline-code P01 | 8m | 1 tasks | 2 files |
+| Phase 03-vision-pipeline-code P01 | 2min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -85,6 +86,8 @@ Recent decisions affecting current work:
 - [Phase 02-tts-pipeline-code]: Tests went straight to GREEN: production code (protocol.py, manager.py) already implemented TTS_AUDIO 0x05 wiring correctly
 - [Phase 02-tts-pipeline-code]: emit_async replaces emit() throughout TTSEngine — TTS_END cannot race ahead of audio chunks
 - [Phase 02-tts-pipeline-code]: hasattr(audio, 'cpu') duck-type guard avoids importing torch in tts.py
+- [Phase 03-vision-pipeline-code]: VisionConfig.lip_roi_size corrected to (88,88) — Dolphin requires exactly 88x88; 96x96 would produce wrong-shaped tensors
+- [Phase 03-vision-pipeline-code]: GazeEstimator L2CS tests went straight to GREEN — production code already handles empty yaw/pitch and RuntimeError
 
 ### Pending Todos
 
@@ -99,6 +102,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-10T07:15:09.657Z
-Stopped at: Completed 02-tts-pipeline-code plan 01 (02-01-PLAN.md)
+Last session: 2026-03-10T07:55:45.818Z
+Stopped at: Completed 03-vision-pipeline-code plan 01 (03-01-PLAN.md)
 Resume file: None

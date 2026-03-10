@@ -40,8 +40,8 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 ### Vision Pipeline
 
-- [ ] **VIS-01**: L2CS-Net gaze estimation activated with correct arch (`ResNet50`, not `Gaze360`)
-- [ ] **VIS-02**: Lip extraction produces mouth ROI compatible with Dolphin (88x88 grayscale from MediaPipe landmarks)
+- [x] **VIS-01**: L2CS-Net gaze estimation activated with correct arch (`ResNet50`, not `Gaze360`)
+- [x] **VIS-02**: Lip extraction produces mouth ROI compatible with Dolphin (88x88 grayscale from MediaPipe landmarks)
 - [ ] **VIS-03**: Gaze-based engagement detection with sustained gaze threshold (>2s)
 - [ ] **VIS-04**: Face tracking maintains persistent IDs across frames (existing MediaPipe + IOU)
 
