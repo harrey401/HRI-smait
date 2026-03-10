@@ -51,7 +51,9 @@ class ASRConfig:
 class EOUConfig:
     min_silence_ms: int = 300
     confidence_threshold: float = 0.7
-    hard_cutoff_ms: int = 1500
+    hard_cutoff_ms: int = 1800
+    vad_silence_ms: int = 1800
+    barge_in_min_speech_ms: int = 200
 
 
 @dataclass
