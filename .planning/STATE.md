@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 06-android-audio-pipeline plan 02 (06-02-PLAN.md)
-last_updated: "2026-03-10T20:54:22.107Z"
+stopped_at: Completed 06-android-audio-pipeline plan 01 (06-01-PLAN.md)
+last_updated: "2026-03-10T20:57:15.616Z"
 last_activity: 2026-03-09 -- Roadmap restructured for HOME/LAB split
 progress:
   total_phases: 8
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 13
-  completed_plans: 12
+  completed_plans: 13
   percent: 33
 ---
 
@@ -68,6 +68,7 @@ Progress: [███░░░░░░░] 33%
 | Phase 05-turn-taking-aec-code P01 | 4min | 2 tasks | 6 files |
 | Phase 05-turn-taking-aec-code P02 | 5m39s | 2 tasks | 6 files |
 | Phase 06-android-audio-pipeline P02 | 4min | 2 tasks | 3 files |
+| Phase 06-android-audio-pipeline P01 | 7m | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -110,6 +111,9 @@ Recent decisions affecting current work:
 - [Phase 06-android-audio-pipeline]: Injectable audioWriter lambda in TtsAudioPlayer enables JVM unit tests without Android SDK — no Robolectric needed
 - [Phase 06-android-audio-pipeline]: ttsAudioPlayer.release() called in stopStreaming() not just onDestroy() — prevents AudioTrack leaks across reconnect cycles
 - [Phase 06-android-audio-pipeline]: isSpeaking.getAndSet(true) on first 0x05 frame arrival (not on tts_control:start) — avoids race where audio chunk arrives before control message
+- [Phase 06-android-audio-pipeline]: Channel adapter uses [0x00, ch_id, pcm_lo, pcm_hi] with IDs 1..6; cae-work-march2 branch used 0x00 which caused CAE onAudio to never fire
+- [Phase 06-android-audio-pipeline]: DOA sent as JSON text WebSocket frame not binary 0x03; binary collides with AUDIO_RAW protocol type
+- [Phase 06-android-audio-pipeline]: CAE bypass removed; onAudio sends 0x01 beamformed; pcmListener sends 0x03 raw 4ch; isSpeaking mic gate removed (server Phase 5 AEC)
 
 ### Pending Todos
 
@@ -124,6 +128,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-10T20:54:22.105Z
-Stopped at: Completed 06-android-audio-pipeline plan 02 (06-02-PLAN.md)
+Last session: 2026-03-10T20:57:15.614Z
+Stopped at: Completed 06-android-audio-pipeline plan 01 (06-01-PLAN.md)
 Resume file: None

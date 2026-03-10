@@ -18,7 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Vision Pipeline Code** - Rewrite L2CS-Net gaze, lip extraction for Dolphin format (completed 2026-03-10)
 - [x] **Phase 4: Speaker Separation Code** - Rewrite Dolphin separator with correct API and tensor shapes (completed 2026-03-10)
 - [x] **Phase 5: Turn-Taking & AEC Code** - VAD-based EOU, AEC research, barge-in logic (completed 2026-03-10)
-- [ ] **Phase 6: Android Audio Pipeline** - Merge CAE beamforming, 3 streams + DOA, AudioTrack playback
+- [x] **Phase 6: Android Audio Pipeline** - Merge CAE beamforming, 3 streams + DOA, AudioTrack playback (completed 2026-03-10)
 
 ### LAB phases (RTX 5070 + robot required):
 - [ ] **Phase 7: GPU Validation & Model Loading** - Verify all models on sm_120, VRAM budget, Parakeet ASR
@@ -128,7 +128,7 @@ Plans:
   4. App receives 0x05 TTS frames and plays via AudioTrack
   5. Server demuxes all streams and DOA without errors (verified in lab)
 
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] 06-01-PLAN.md — CaeAudioManager with fixed channel adapter, dual stream (0x01+0x03), JSON DOA, MainActivity wiring
@@ -183,6 +183,6 @@ Phase 6 (Android) code can be written alongside Phases 2-5, but hardware testing
 | 3. Vision Pipeline Code | 2/2 | Complete   | 2026-03-10 | - |
 | 4. Speaker Separation Code | 2/2 | Complete   | 2026-03-10 | - |
 | 5. Turn-Taking & AEC Code | 2/2 | Complete   | 2026-03-10 | - |
-| 6. Android Audio Pipeline | HOME+LAB | 0/2 | Planning complete | - |
+| 6. Android Audio Pipeline | 2/2 | Complete   | 2026-03-10 | - |
 | 7. GPU Validation & Model Loading | LAB | 0/2 | Not started | - |
 | 8. Full Integration & Quality | LAB | 0/3 | Not started | - |

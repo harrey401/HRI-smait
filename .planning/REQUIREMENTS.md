@@ -15,10 +15,10 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 ### Audio Pipeline
 
-- [ ] **AUD-01**: Android app integrates CAE beamforming (merge cae-work-march2 via revert-the-revert)
-- [ ] **AUD-02**: CAE 8-channel to 4-channel format mismatch resolved via hlw.ini config
-- [ ] **AUD-03**: Android app sends 3 streams: CAE audio (0x01), raw 4-channel audio (0x03), video (0x02)
-- [ ] **AUD-04**: Android app sends DOA angles from CAE callbacks as JSON messages
+- [x] **AUD-01**: Android app integrates CAE beamforming (merge cae-work-march2 via revert-the-revert)
+- [x] **AUD-02**: CAE 8-channel to 4-channel format mismatch resolved via hlw.ini config
+- [x] **AUD-03**: Android app sends 3 streams: CAE audio (0x01), raw 4-channel audio (0x03), video (0x02)
+- [x] **AUD-04**: Android app sends DOA angles from CAE callbacks as JSON messages
 - [x] **AUD-05**: Silero VAD segments speech from CAE audio with ring buffer alignment
 - [x] **AUD-06**: Acoustic echo cancellation replaces mic gating (research CAE SDK AEC + software AEC, implement best approach)
 - [x] **AUD-07**: Barge-in support — robot listens while speaking, user can interrupt mid-response
