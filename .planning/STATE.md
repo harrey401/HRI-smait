@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 01-dependency-setup-stub-api-fixes plan 03 (01-03-PLAN.md)
-last_updated: "2026-03-10T01:47:56.758Z"
+stopped_at: Completed 02-tts-pipeline-code plan 02 (02-02-PLAN.md)
+last_updated: "2026-03-10T07:13:41.652Z"
 last_activity: 2026-03-09 -- Roadmap restructured for HOME/LAB split
 progress:
   total_phases: 8
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
+  total_plans: 5
+  completed_plans: 4
   percent: 33
 ---
 
@@ -59,6 +59,7 @@ Progress: [███░░░░░░░] 33%
 | Phase 01-dependency-setup-stub-api-fixes P01 | 15 | 2 tasks | 11 files |
 | Phase 01-dependency-setup-stub-api-fixes P02 | 10 | 2 tasks | 4 files |
 | Phase 01-dependency-setup-stub-api-fixes P03 | 4m18s | 2 tasks | 4 files |
+| Phase 02-tts-pipeline-code P02 | 2m13s | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -80,6 +81,7 @@ Recent decisions affecting current work:
 - [Phase 01-dependency-setup-stub-api-fixes]: Grayscale conversion to 88x88 happens inside _run_dolphin, not in LipExtractor — keeps pipeline RGB-native
 - [Phase 01-dependency-setup-stub-api-fixes]: TTSEngine voice defaults to af_heart via getattr on TTSConfig — no schema change needed
 - [Phase 01-dependency-setup-stub-api-fixes]: Log message 'LiveKit turn detector' retained without hyphen for user clarity; tests check lowercase 'livekit' which is absent
+- [Phase 02-tts-pipeline-code]: Tests went straight to GREEN: production code (protocol.py, manager.py) already implemented TTS_AUDIO 0x05 wiring correctly
 
 ### Pending Todos
 
@@ -94,6 +96,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-10T01:43:54.206Z
-Stopped at: Completed 01-dependency-setup-stub-api-fixes plan 03 (01-03-PLAN.md)
+Last session: 2026-03-10T07:13:41.650Z
+Stopped at: Completed 02-tts-pipeline-code plan 02 (02-02-PLAN.md)
 Resume file: None

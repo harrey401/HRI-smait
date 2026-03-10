@@ -56,7 +56,7 @@ Plans:
   3. TTS audio encoded as 0x05 binary frames for WebSocket transmission
   4. Unit tests verify streaming behavior with mocked KPipeline
 
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
 - [ ] 02-01-PLAN.md — Fix TTSEngine emit_async streaming, GPU-safe audio conversion, streaming tests
@@ -172,7 +172,7 @@ Phase 6 (Android) code can be written alongside Phases 2-5, but hardware testing
 | Phase | Location | Plans Complete | Status | Completed |
 |-------|----------|----------------|--------|-----------|
 | 1. Dependency Setup & Stub API Fixes | 3/3 | Complete   | 2026-03-10 | - |
-| 2. TTS Pipeline Code | HOME | 0/2 | Not started | - |
+| 2. TTS Pipeline Code | 1/2 | In Progress|  | - |
 | 3. Vision Pipeline Code | HOME | 0/2 | Not started | - |
 | 4. Speaker Separation Code | HOME | 0/3 | Not started | - |
 | 5. Turn-Taking & AEC Code | HOME | 0/2 | Not started | - |
