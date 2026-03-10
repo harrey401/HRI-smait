@@ -7,6 +7,7 @@ import time
 from dataclasses import dataclass
 from typing import Optional
 
+import cv2
 import numpy as np
 import torch
 
@@ -48,6 +49,9 @@ class DolphinSeparator:
     - separated_audio: clean speech of target speaker (16kHz mono)
     - separation_confidence: SNR improvement estimate
 
+    Audio tensor: [1, samples] mono float32 at 16kHz.
+    Video tensor: [1, 1, T, 88, 88, 1] grayscale lip crops (batch, group, frames, H, W, C).
+
     Fallback: If no raw 4-channel audio available, Dolphin works with
     single-channel audio + visual features.
     """
@@ -63,13 +67,13 @@ class DolphinSeparator:
         """Load Dolphin AV-TSE model."""
         logger.info("Loading Dolphin AV-TSE model...")
         try:
-            # Dolphin is loaded from the JusperLee/Dolphin repository
-            # The model expects:
-            #   - audio: (batch, channels, samples) for multi-channel
-            #   - video: (batch, frames, H, W, C) lip ROI sequence
-            from dolphin import DolphinModel  # type: ignore[import-not-found]
+            # Dolphin is loaded from the look2hear vendored library.
+            # To vendor: copy the JusperLee/Dolphin look2hear/ directory into the project root.
+            # Audio expects: (batch=1, samples) mono float32 at 16kHz
+            # Video expects: (batch=1, 1, T, H=88, W=88, C=1) grayscale
+            from look2hear.models import Dolphin  # type: ignore[import-not-found]
 
-            self._model = DolphinModel.from_pretrained("JusperLee/Dolphin")
+            self._model = Dolphin.from_pretrained("JusperLee/Dolphin")
             self._model = self._model.to(self._device)
             self._model.eval()
             self._available = True
@@ -77,7 +81,7 @@ class DolphinSeparator:
         except ImportError:
             logger.warning(
                 "Dolphin not installed. Speech separation will pass through CAE audio. "
-                "Install from: github.com/JusperLee/Dolphin"
+                "Vendor look2hear/ from github.com/JusperLee/Dolphin into the project root."
             )
         except Exception:
             logger.exception("Failed to load Dolphin model")
@@ -121,35 +125,56 @@ class DolphinSeparator:
         channels: int,
         start: float,
     ) -> SeparationResult:
-        """Run the Dolphin model."""
-        # Prepare audio tensor
+        """Run the Dolphin model.
+
+        Audio tensor: [1, samples] mono float32 at 16kHz.
+        Video tensor: [1, 1, T, 88, 88, 1] grayscale lip crops.
+        """
+        # Prepare audio tensor — Dolphin always takes mono [1, samples]
         audio_float = audio.astype(np.float32) / 32768.0
 
-        if channels > 1:
-            # Reshape interleaved to (channels, samples)
-            n_samples = len(audio_float) // channels
-            audio_tensor = torch.from_numpy(
-                audio_float[:n_samples * channels].reshape(n_samples, channels).T
-            ).unsqueeze(0).to(self._device)
-            used_multi = True
-        else:
-            audio_tensor = torch.from_numpy(audio_float).unsqueeze(0).unsqueeze(0).to(self._device)
-            used_multi = False
+        # Track whether the original input was multi-channel (for logging)
+        used_multi = channels > 1
 
-        # Prepare lip video tensor
-        if lip_frames:
-            lip_images = np.stack([roi.image for roi in lip_frames], axis=0)
-            # Normalize to [0, 1]
-            lip_tensor = torch.from_numpy(lip_images).float() / 255.0
-            lip_tensor = lip_tensor.unsqueeze(0).to(self._device)  # (1, T, H, W, C)
+        if channels > 1:
+            # Mix down multi-channel interleaved audio to mono by averaging
+            n_samples = len(audio_float) // channels
+            reshaped = audio_float[:n_samples * channels].reshape(n_samples, channels)
+            mono_float32 = reshaped.mean(axis=1)
         else:
-            # No lip frames — create dummy (Dolphin can work audio-only with reduced quality)
-            lip_tensor = None
+            mono_float32 = audio_float
+
+        # Shape: [1, samples]
+        audio_tensor = torch.from_numpy(mono_float32).unsqueeze(0).to(self._device)
+
+        # Prepare lip video tensor — [1, 1, T, 88, 88, 1] grayscale
+        if lip_frames:
+            # Convert each RGB lip ROI to grayscale and resize to 88x88
+            grayscale_frames = []
+            for roi in lip_frames:
+                img = roi.image  # RGB uint8 (H, W, 3)
+                # Convert RGB to grayscale
+                gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)  # (H, W)
+                # Resize to 88x88
+                gray = cv2.resize(gray, (88, 88), interpolation=cv2.INTER_LINEAR)
+                grayscale_frames.append(gray)
+
+            # Stack frames: [T, 88, 88]
+            lip_stack = np.stack(grayscale_frames, axis=0)
+            # Add channel dim: [T, 88, 88, 1]
+            lip_stack = lip_stack[..., np.newaxis]
+            # Add batch and group dims: [1, 1, T, 88, 88, 1]
+            video_tensor = torch.from_numpy(
+                lip_stack[np.newaxis, np.newaxis]
+            ).float().to(self._device)
+        else:
+            # No lip frames — None (Dolphin can work audio-only with reduced quality)
+            video_tensor = None
 
         # Run model
         with torch.no_grad():
-            if lip_tensor is not None:
-                output = self._model(audio_tensor, lip_tensor)
+            if video_tensor is not None:
+                output = self._model(audio_tensor, video_tensor)
             else:
                 output = self._model(audio_tensor)
 
