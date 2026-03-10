@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 02-tts-pipeline-code plan 02 (02-02-PLAN.md)
-last_updated: "2026-03-10T07:13:41.652Z"
+stopped_at: Completed 02-tts-pipeline-code plan 01 (02-01-PLAN.md)
+last_updated: "2026-03-10T07:15:09.659Z"
 last_activity: 2026-03-09 -- Roadmap restructured for HOME/LAB split
 progress:
   total_phases: 8
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 5
-  completed_plans: 4
+  completed_plans: 5
   percent: 33
 ---
 
@@ -60,6 +60,7 @@ Progress: [███░░░░░░░] 33%
 | Phase 01-dependency-setup-stub-api-fixes P02 | 10 | 2 tasks | 4 files |
 | Phase 01-dependency-setup-stub-api-fixes P03 | 4m18s | 2 tasks | 4 files |
 | Phase 02-tts-pipeline-code P02 | 2m13s | 1 tasks | 2 files |
+| Phase 02-tts-pipeline-code P01 | 8m | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -82,6 +83,8 @@ Recent decisions affecting current work:
 - [Phase 01-dependency-setup-stub-api-fixes]: TTSEngine voice defaults to af_heart via getattr on TTSConfig — no schema change needed
 - [Phase 01-dependency-setup-stub-api-fixes]: Log message 'LiveKit turn detector' retained without hyphen for user clarity; tests check lowercase 'livekit' which is absent
 - [Phase 02-tts-pipeline-code]: Tests went straight to GREEN: production code (protocol.py, manager.py) already implemented TTS_AUDIO 0x05 wiring correctly
+- [Phase 02-tts-pipeline-code]: emit_async replaces emit() throughout TTSEngine — TTS_END cannot race ahead of audio chunks
+- [Phase 02-tts-pipeline-code]: hasattr(audio, 'cpu') duck-type guard avoids importing torch in tts.py
 
 ### Pending Todos
 
@@ -96,6 +99,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-10T07:13:41.650Z
-Stopped at: Completed 02-tts-pipeline-code plan 02 (02-02-PLAN.md)
+Last session: 2026-03-10T07:15:09.657Z
+Stopped at: Completed 02-tts-pipeline-code plan 01 (02-01-PLAN.md)
 Resume file: None
