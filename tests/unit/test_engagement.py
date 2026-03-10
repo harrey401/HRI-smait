@@ -284,3 +284,78 @@ def test_reset_clears_state(detector):
 
     assert detector.state == EngagementState.IDLE
     assert detector.target_track_id is None
+
+
+def test_doa_angle_disambiguates_multiple_faces(event_bus, config):
+    """DOA angle selects face closest in angular position, not just largest face area.
+
+    Two faces:
+    - Face A: left of frame (bbox x=50, w=120 → center_x=110), face_area=15000 (LARGER)
+    - Face B: near center (bbox x=300, w=90 → center_x=345), face_area=8000 (smaller)
+
+    DOA angle=0 (front/center). Face B is angularly closer to DOA=0 than face A.
+    Per-face DOA scoring must select face B even though face A has larger area.
+
+    NOTE: This test is RED until _doa_score_for_face is implemented. Current code
+    applies a flat 1.2x bonus to ALL faces, so the larger-area face always wins.
+    """
+    detector = EngagementDetector(config, event_bus)
+
+    # Set DOA angle to 0 (front/center of camera field of view)
+    event_bus.emit(EventType.DOA_UPDATE, {"angle": 0})
+    assert detector._last_doa_angle == 0
+
+    landmarks = np.random.rand(468, 3).astype(np.float32)
+
+    # Face A: left of frame — farther from DOA=0, but has larger face_area
+    face_a = FaceTrack(
+        track_id=10,
+        bbox=(50, 100, 120, 120),   # center_x = 50 + 120/2 = 110
+        landmarks=landmarks,
+        head_yaw=0.0,
+        head_pitch=0.0,
+        last_seen=0.0,
+        confidence=0.9,
+        is_target=False,
+        face_area=15000,
+    )
+
+    # Face B: near center — close to DOA=0, smaller area
+    face_b = FaceTrack(
+        track_id=20,
+        bbox=(300, 100, 90, 90),    # center_x = 300 + 90/2 = 345
+        landmarks=landmarks,
+        head_yaw=0.0,
+        head_pitch=0.0,
+        last_seen=0.0,
+        confidence=0.9,
+        is_target=False,
+        face_area=8000,
+    )
+
+    gaze_a = GazeResult(
+        track_id=10,
+        yaw_deg=5.0,
+        pitch_deg=3.0,
+        is_looking_at_robot=True,
+        timestamp=0.0,
+    )
+    gaze_b = GazeResult(
+        track_id=20,
+        yaw_deg=5.0,
+        pitch_deg=3.0,
+        is_looking_at_robot=True,
+        timestamp=0.0,
+    )
+
+    result = detector._select_primary_user(
+        [face_a, face_b],
+        {10: gaze_a, 20: gaze_b},
+    )
+
+    assert result is not None, "Expected a primary user to be selected"
+    assert result.track_id == 20, (
+        f"Expected face B (track_id=20, near DOA=0) to win, "
+        f"but got track_id={result.track_id}. "
+        f"Per-face DOA scoring must prefer angular proximity over flat area bonus."
+    )
