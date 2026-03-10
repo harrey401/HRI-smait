@@ -56,14 +56,14 @@ class GazeEstimator:
             from l2cs import Pipeline as L2CSPipeline
             self._l2cs_pipeline = L2CSPipeline(
                 weights=None,  # Auto-download
-                arch="Gaze360",
+                arch='ResNet50',
                 device=self._device,
             )
             logger.info("L2CS-Net loaded on %s", self._device)
         except ImportError:
             logger.warning(
                 "L2CS-Net not installed. Gaze estimation will use head pose fallback. "
-                "Install from: github.com/Ahmednull/L2CS-Net"
+                "Install from: pip install git+https://github.com/edavalosanaya/L2CS-Net.git@main"
             )
             self._l2cs_pipeline = None
 

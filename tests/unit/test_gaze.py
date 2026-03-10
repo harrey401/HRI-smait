@@ -75,13 +75,8 @@ def test_head_pose_not_looking_at_robot(gaze_estimator):
     assert result.is_looking_at_robot is False
 
 
-@pytest.mark.xfail(reason="Stub not yet fixed - Plan 03: gaze.py still uses arch='Gaze360'")
 def test_correct_arch_param(config, event_bus):
-    """QUAL-01: init_model() must pass arch='ResNet50', not arch='Gaze360'.
-
-    This test is RED — it will fail until Plan 03 fixes gaze.py to use
-    'arch=\\'ResNet50\\'' in the L2CSPipeline constructor call.
-    """
+    """QUAL-01: init_model() must pass arch='ResNet50', not arch='Gaze360'."""
     mock_pipeline_cls = MagicMock()
     mock_pipeline_instance = MagicMock()
     mock_pipeline_cls.return_value = mock_pipeline_instance
@@ -95,4 +90,18 @@ def test_correct_arch_param(config, event_bus):
     # Check keyword arg
     assert call_kwargs.kwargs.get("arch") == "ResNet50", (
         f"Expected arch='ResNet50', got arch='{call_kwargs.kwargs.get('arch')}'"
+    )
+
+
+def test_install_instruction_updated():
+    """QUAL-01: ImportError warning must reference edavalosanaya fork, not Ahmednull."""
+    import pathlib
+    gaze_src = pathlib.Path(__file__).parent.parent.parent / "smait" / "perception" / "gaze.py"
+    source = gaze_src.read_text(encoding="utf-8")
+
+    assert "edavalosanaya" in source, (
+        "gaze.py install warning must reference edavalosanaya fork, not Ahmednull"
+    )
+    assert "Ahmednull" not in source, (
+        "gaze.py must not reference Ahmednull fork"
     )
