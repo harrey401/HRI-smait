@@ -61,7 +61,7 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 ### Code Quality
 
-- [ ] **QUAL-01**: All stub APIs corrected to match real model interfaces
+- [x] **QUAL-01**: All stub APIs corrected to match real model interfaces
 - [ ] **QUAL-02**: Dead code removed after stub replacement (unused imports, old class references, commented-out code)
 - [ ] **QUAL-03**: Unit + integration tests at 80%+ coverage
 - [ ] **QUAL-04**: End-to-end latency: speech end -> TTS start < 1500ms
