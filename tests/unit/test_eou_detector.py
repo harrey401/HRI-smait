@@ -76,13 +76,8 @@ def test_available_flag_starts_false(detector):
     assert detector.available is False
 
 
-@pytest.mark.xfail(reason="Stub not yet fixed - Plan 03: eou_detector.py still imports from livekit")
 def test_no_livekit_import():
-    """QUAL-01: eou_detector.py source must not contain 'livekit' import.
-
-    This test is RED — it will fail until Plan 03 removes the LiveKit
-    import attempt from init_model() in eou_detector.py.
-    """
+    """QUAL-01: eou_detector.py source must not contain 'livekit' or 'turn_detector' strings."""
     source_path = pathlib.Path(__file__).parent.parent.parent / "smait" / "perception" / "eou_detector.py"
     source = source_path.read_text(encoding="utf-8")
 
@@ -90,3 +85,62 @@ def test_no_livekit_import():
         "eou_detector.py still references 'livekit'. "
         "Plan 03 must remove the LiveKit import and leave heuristic-only code."
     )
+    assert "turn_detector" not in source, (
+        "eou_detector.py still references 'turn_detector'."
+    )
+    assert "turn-detector" not in source, (
+        "eou_detector.py still references 'turn-detector'."
+    )
+
+
+def test_no_transformers_import():
+    """QUAL-01: eou_detector.py source must not contain 'transformers' or 'AutoModel' strings."""
+    source_path = pathlib.Path(__file__).parent.parent.parent / "smait" / "perception" / "eou_detector.py"
+    source = source_path.read_text(encoding="utf-8")
+
+    assert "transformers" not in source, (
+        "eou_detector.py still references 'transformers'. Plan 03 must remove it."
+    )
+    assert "AutoModel" not in source, (
+        "eou_detector.py still references 'AutoModel'. Plan 03 must remove it."
+    )
+
+
+def test_init_model_sets_unavailable(config, event_bus):
+    """After init_model(), _available is False (no model loaded in Phase 1)."""
+    import asyncio
+    detector = EOUDetector(config, event_bus)
+    asyncio.run(detector.init_model())
+    assert detector._available is False, (
+        f"Expected _available=False after init_model(), got {detector._available}"
+    )
+
+
+def test_on_silence_hard_cutoff(config, event_bus):
+    """on_silence triggers END_OF_TURN after hard_cutoff_ms of silence."""
+    import asyncio
+    emitted_events = []
+
+    detector = EOUDetector(config, event_bus)
+    asyncio.run(detector.init_model())
+
+    # Subscribe to END_OF_TURN events
+    from smait.core.events import EventType
+    event_bus.subscribe(EventType.END_OF_TURN, lambda data: emitted_events.append(data))
+
+    # Set up transcript and start silence timer
+    t0 = 0.0
+    detector.update_transcript("Hello there", timestamp=t0)
+
+    # First on_silence call sets silence_start
+    detector.on_silence(timestamp=t0 + 0.1)
+
+    # Second on_silence call at t0 + hard_cutoff_s triggers hard cutoff
+    # (silence_ms = (t0 + hard_cutoff_s) - silence_start = hard_cutoff_s - 0.1s + extra)
+    hard_cutoff_s = config.eou.hard_cutoff_ms / 1000.0
+    detector.on_silence(timestamp=t0 + 0.1 + hard_cutoff_s)
+
+    assert len(emitted_events) == 1, (
+        f"Expected 1 END_OF_TURN event from hard cutoff, got {len(emitted_events)}"
+    )
+    assert emitted_events[0]["reason"] == "hard_cutoff"
