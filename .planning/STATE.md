@@ -4,7 +4,7 @@ milestone: v1.0
 milestone_name: milestone
 status: planning
 stopped_at: Completed 02-tts-pipeline-code plan 01 (02-01-PLAN.md)
-last_updated: "2026-03-10T07:15:09.659Z"
+last_updated: "2026-03-10T07:18:31.868Z"
 last_activity: 2026-03-09 -- Roadmap restructured for HOME/LAB split
 progress:
   total_phases: 8
