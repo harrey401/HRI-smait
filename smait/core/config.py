@@ -58,7 +58,7 @@ class EOUConfig:
 class VisionConfig:
     max_faces: int = 5
     min_face_confidence: float = 0.6
-    lip_roi_size: tuple = (96, 96)
+    lip_roi_size: tuple = (88, 88)
 
 
 @dataclass
