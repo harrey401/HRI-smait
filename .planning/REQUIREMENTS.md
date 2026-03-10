@@ -54,8 +54,8 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 ### Conversation Loop
 
-- [ ] **CONV-01**: Full loop: engagement → greeting → speech → separation → ASR → LLM → TTS → playback
-- [ ] **CONV-02**: Session state machine drives interaction lifecycle (idle → approaching → engaged → conversing → disengaging)
+- [ ] **CONV-01**: Full loop: engagement -> greeting -> speech -> separation -> ASR -> LLM -> TTS -> playback
+- [ ] **CONV-02**: Session state machine drives interaction lifecycle (idle -> approaching -> engaged -> conversing -> disengaging)
 - [ ] **CONV-03**: Proactive greeting when sustained engagement detected
 - [ ] **CONV-04**: Goodbye detection ends conversation gracefully
 
@@ -64,7 +64,7 @@ Requirements for this milestone. Each maps to roadmap phases.
 - [ ] **QUAL-01**: All stub APIs corrected to match real model interfaces
 - [ ] **QUAL-02**: Dead code removed after stub replacement (unused imports, old class references, commented-out code)
 - [ ] **QUAL-03**: Unit + integration tests at 80%+ coverage
-- [ ] **QUAL-04**: End-to-end latency: speech end → TTS start < 1500ms
+- [ ] **QUAL-04**: End-to-end latency: speech end -> TTS start < 1500ms
 - [ ] **QUAL-05**: No redundant files or duplicate logic across modules
 
 ## v2 Requirements
@@ -91,12 +91,12 @@ Deferred to future milestone. Tracked but not in current roadmap.
 
 | Feature | Reason |
 |---------|--------|
-| LiveKit EOU detector | Package is private/unavailable — replaced by VAD-based approach |
+| LiveKit EOU detector | Package is private/unavailable -- replaced by VAD-based approach |
 | Wake word detection | Robot uses visual engagement (gaze/approach) to initiate |
 | Piper TTS | Replaced by Kokoro-82M |
-| Multi-person simultaneous conversation | Robot focuses on one target speaker — v2 feature |
-| Software AEC as standalone | Will be evaluated alongside CAE SDK AEC — best approach wins |
-| Mic gating as permanent solution | Band-aid that blocks barge-in — replaced by proper AEC |
+| Multi-person simultaneous conversation | Robot focuses on one target speaker -- v2 feature |
+| Software AEC as standalone | Will be evaluated alongside CAE SDK AEC -- best approach wins |
+| Mic gating as permanent solution | Band-aid that blocks barge-in -- replaced by proper AEC |
 | Speaker enrollment/voiceprint | Visual target selection is enrollment-free |
 | Cloud-only deployment | System runs on local edge server with GPU |
 
@@ -111,9 +111,9 @@ Deferred to future milestone. Tracked but not in current roadmap.
 | AUD-02 | Phase 2 | Pending |
 | AUD-03 | Phase 2 | Pending |
 | AUD-04 | Phase 2 | Pending |
-| AUD-05 | Phase 2 | Pending |
-| AUD-06 | Phase 2 | Pending |
-| AUD-07 | Phase 2 | Pending |
+| AUD-05 | Phase 5 | Pending |
+| AUD-06 | Phase 6 | Pending |
+| AUD-07 | Phase 6 | Pending |
 | SEP-01 | Phase 5 | Pending |
 | SEP-02 | Phase 5 | Pending |
 | SEP-03 | Phase 5 | Pending |
@@ -137,15 +137,15 @@ Deferred to future milestone. Tracked but not in current roadmap.
 | CONV-04 | Phase 7 | Pending |
 | QUAL-01 | Phase 1 | Pending |
 | QUAL-02 | Phase 7 | Pending |
-| QUAL-03 | Phase 8 | Pending |
+| QUAL-03 | Phase 7 | Pending |
 | QUAL-04 | Phase 7 | Pending |
 | QUAL-05 | Phase 7 | Pending |
 
 **Coverage:**
 - v1 requirements: 35 total
 - Mapped to phases: 35
-- Unmapped: 0 ✓
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-09*
-*Last updated: 2026-03-09 after initial definition*
+*Last updated: 2026-03-09 after roadmap creation*
