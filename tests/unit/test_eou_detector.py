@@ -1,7 +1,7 @@
-"""Test scaffold for EOUDetector — RED phase (Plan 01).
+"""Test scaffold for EOUDetector — extended with VAD-based EOU tests (Plan 05-01).
 
-Heuristic predict tests PASS now.
-LiveKit import removal test is marked xfail until Plan 03 fixes eou_detector.py.
+Heuristic predict tests PASS.
+VAD-based tests cover feed_vad_prob() with 1800ms silence threshold.
 """
 
 from __future__ import annotations
@@ -144,3 +144,120 @@ def test_on_silence_hard_cutoff(config, event_bus):
         f"Expected 1 END_OF_TURN event from hard cutoff, got {len(emitted_events)}"
     )
     assert emitted_events[0]["reason"] == "hard_cutoff"
+
+
+# ---------------------------------------------------------------------------
+# VAD-based EOU tests (Phase 05-01: feed_vad_prob)
+# ---------------------------------------------------------------------------
+
+def _collect_eou_events(event_bus):
+    """Helper: subscribe to END_OF_TURN and return the collecting list."""
+    from smait.core.events import EventType
+    events = []
+    event_bus.subscribe(EventType.END_OF_TURN, lambda data: events.append(data))
+    return events
+
+
+def test_vad_silence_triggers_eou(config, event_bus):
+    """feed_vad_prob: 1800ms of silence (28800 samples at 16kHz) after speech emits END_OF_TURN."""
+    detector = EOUDetector(config, event_bus)
+    events = _collect_eou_events(event_bus)
+
+    # One chunk of high speech probability (sets _in_speech=True, _pending_turn=True)
+    detector.feed_vad_prob(speech_prob=0.9, n_samples=480, timestamp=0.0)
+
+    # Feed 60 chunks of 480 samples each at low prob (60 * 480 = 28800 samples = 1800ms at 16kHz)
+    # All below 0.35 exit threshold
+    for i in range(60):
+        ts = (i + 1) * 0.03  # 30ms per chunk
+        detector.feed_vad_prob(speech_prob=0.1, n_samples=480, timestamp=ts)
+
+    assert len(events) == 1, f"Expected 1 END_OF_TURN, got {len(events)}"
+    assert events[0]["reason"] == "vad_silence", f"Expected reason='vad_silence', got {events[0]}"
+
+
+def test_vad_short_silence_no_eou(config, event_bus):
+    """feed_vad_prob: short silence (33 chunks * 480 = 15840 < 28800) does NOT emit END_OF_TURN."""
+    detector = EOUDetector(config, event_bus)
+    events = _collect_eou_events(event_bus)
+
+    # Speech start
+    detector.feed_vad_prob(speech_prob=0.9, n_samples=480, timestamp=0.0)
+
+    # Only 33 chunks of silence (15840 samples < 28800 threshold)
+    for i in range(33):
+        ts = (i + 1) * 0.03
+        detector.feed_vad_prob(speech_prob=0.1, n_samples=480, timestamp=ts)
+
+    assert len(events) == 0, f"Expected no END_OF_TURN for short silence, got {len(events)}"
+
+
+def test_vad_speech_resets_counter(config, event_bus):
+    """feed_vad_prob: speech mid-silence resets counter; exactly 1 END_OF_TURN on second full silence."""
+    detector = EOUDetector(config, event_bus)
+    events = _collect_eou_events(event_bus)
+
+    # First speech burst
+    detector.feed_vad_prob(speech_prob=0.9, n_samples=480, timestamp=0.0)
+
+    # 20 chunks of silence (9600 samples, not enough to trigger)
+    for i in range(20):
+        detector.feed_vad_prob(speech_prob=0.1, n_samples=480, timestamp=(i + 1) * 0.03)
+
+    # Speech again — resets silence counter
+    detector.feed_vad_prob(speech_prob=0.8, n_samples=480, timestamp=0.63)
+
+    # Now 60 more chunks of silence — should trigger EOU
+    for i in range(60):
+        ts = 0.66 + i * 0.03
+        detector.feed_vad_prob(speech_prob=0.1, n_samples=480, timestamp=ts)
+
+    assert len(events) == 1, f"Expected exactly 1 END_OF_TURN, got {len(events)}"
+
+
+def test_vad_hysteresis_zone(config, event_bus):
+    """feed_vad_prob: prob in hysteresis zone (0.35-0.5) does not change silence count."""
+    detector = EOUDetector(config, event_bus)
+    events = _collect_eou_events(event_bus)
+
+    # Speech to enter _in_speech
+    detector.feed_vad_prob(speech_prob=0.9, n_samples=480, timestamp=0.0)
+
+    # Hysteresis zone — should neither increment silence nor reset counter
+    for i in range(100):
+        detector.feed_vad_prob(speech_prob=0.4, n_samples=480, timestamp=(i + 1) * 0.03)
+
+    # No END_OF_TURN because silence samples never accumulated
+    assert len(events) == 0, f"Expected no EOU in hysteresis zone, got {len(events)}"
+    # And detector is still in speech state (_in_speech stays True, _silence_sample_count stays 0)
+    assert detector._in_speech is True
+    assert detector._silence_sample_count == 0
+
+
+def test_vad_no_turn_without_speech(config, event_bus):
+    """feed_vad_prob: silence without prior speech does NOT emit END_OF_TURN."""
+    detector = EOUDetector(config, event_bus)
+    events = _collect_eou_events(event_bus)
+
+    # 60 chunks of silence right away (no speech first)
+    for i in range(60):
+        detector.feed_vad_prob(speech_prob=0.1, n_samples=480, timestamp=i * 0.03)
+
+    assert len(events) == 0, f"Expected no EOU without prior speech, got {len(events)}"
+
+
+def test_reset_clears_vad_state(config, event_bus):
+    """reset() clears _in_speech, _silence_sample_count, and _pending_turn."""
+    detector = EOUDetector(config, event_bus)
+
+    # Set up an active turn with partial silence
+    detector.feed_vad_prob(speech_prob=0.9, n_samples=480, timestamp=0.0)
+    detector.feed_vad_prob(speech_prob=0.1, n_samples=480, timestamp=0.03)
+
+    assert detector._in_speech is True or detector._silence_sample_count > 0 or detector._pending_turn is True
+
+    detector.reset()
+
+    assert detector._in_speech is False, f"Expected _in_speech=False after reset, got {detector._in_speech}"
+    assert detector._silence_sample_count == 0, f"Expected _silence_sample_count=0 after reset, got {detector._silence_sample_count}"
+    assert detector._pending_turn is False, f"Expected _pending_turn=False after reset, got {detector._pending_turn}"
