@@ -139,13 +139,21 @@ class AudioPipeline:
     """Receives CAE audio, runs Silero VAD, produces SpeechSegments.
 
     Also maintains the RawAudioBuffer for 4-channel audio alignment.
-    Implements mic gating: disables VAD output during TTS playback.
+    Implements barge-in detection: keeps VAD active during TTS playback
+    and emits BARGE_IN when speech is detected, with a 200ms anti-echo guard.
     """
 
     def __init__(self, config: Config, event_bus: EventBus) -> None:
         self._config = config.audio
         self._event_bus = event_bus
-        self._mic_gated = False
+
+        # Barge-in state (replaces _mic_gated)
+        self._tts_playing: bool = False
+        self._tts_start_time: Optional[float] = None
+        self._barge_in_min_speech_ms: int = config.eou.barge_in_min_speech_ms
+
+        # CAE status (updated via CAE_STATUS events)
+        self._cae_status: dict = {"aec": False, "beamforming": False, "noise_suppression": False}
 
         # Silero VAD
         self._vad_model: Optional[torch.nn.Module] = None
@@ -167,6 +175,8 @@ class AudioPipeline:
         # Subscribe to events
         event_bus.subscribe(EventType.TTS_START, self._on_tts_start)
         event_bus.subscribe(EventType.TTS_END, self._on_tts_end)
+        event_bus.subscribe(EventType.CAE_STATUS, self._on_cae_status)
+        event_bus.subscribe(EventType.TTS_AUDIO_CHUNK, self._on_tts_audio_chunk)
 
     async def init_model(self) -> None:
         """Load Silero VAD model."""
@@ -180,9 +190,24 @@ class AudioPipeline:
         logger.info("Silero VAD loaded")
 
     def process_cae_audio(self, data: bytes, timestamp: float) -> None:
-        """Process a chunk of CAE-processed audio through VAD."""
-        if self._mic_gated or self._vad_model is None:
+        """Process a chunk of CAE-processed audio through VAD.
+
+        During TTS playback (_tts_playing=True):
+        - VAD remains active to detect barge-in
+        - If speech detected after 200ms anti-echo guard: emit BARGE_IN
+        - No speech segment accumulation during TTS
+
+        During normal listening (_tts_playing=False):
+        - Normal VAD speech segment accumulation
+        """
+        if self._vad_model is None:
             return
+
+        # Apply software AEC if hardware AEC is not active
+        if hasattr(self, "_aec") and self._aec.available and not self._cae_status.get("aec", False):
+            processed = self._aec.process_near(data)
+            if processed:
+                data = processed
 
         # Convert bytes to float32 tensor for Silero
         samples = np.frombuffer(data, dtype=np.int16).astype(np.float32) / 32768.0
@@ -196,25 +221,45 @@ class AudioPipeline:
             chunk = chunk_tensor[offset:offset + chunk_size]
             speech_prob = self._vad_model(chunk, self._config.sample_rate).item()
 
-            if speech_prob >= self._vad_threshold:
-                if not self._in_speech:
-                    self._in_speech = True
-                    self._speech_start_time = timestamp
-                    self._speech_buffer = []
-                    self._silence_start_time = None
-                    logger.debug("VAD: speech start")
-                self._speech_buffer.append(data[offset * 2:(offset + chunk_size) * 2])
-                self._silence_start_time = None
-            else:
-                if self._in_speech:
-                    if self._silence_start_time is None:
-                        self._silence_start_time = time.monotonic()
-                    self._speech_buffer.append(data[offset * 2:(offset + chunk_size) * 2])
+            if self._tts_playing:
+                # Barge-in detection mode: check for speech but don't accumulate segments
+                if speech_prob >= self._vad_threshold:
+                    # Apply anti-echo guard: ignore speech within barge_in_min_speech_ms of TTS_START
+                    if self._tts_start_time is not None:
+                        elapsed_ms = (time.monotonic() - self._tts_start_time) * 1000
+                        if elapsed_ms < self._barge_in_min_speech_ms:
+                            # Within echo guard window — skip
+                            offset += chunk_size
+                            continue
 
-                    # Check if silence exceeds min_speech_duration threshold
-                    silence_ms = (time.monotonic() - self._silence_start_time) * 1000
-                    if silence_ms >= self._config.min_speech_duration_ms:
-                        self._emit_segment(timestamp)
+                    # Speech detected after guard window: emit BARGE_IN
+                    logger.info("VAD: barge-in detected during TTS")
+                    self._tts_playing = False
+                    self._tts_start_time = None
+                    self._event_bus.emit(EventType.BARGE_IN)
+                    return  # Stop processing further chunks after barge-in
+                # No speech during TTS: suppress segment accumulation
+            else:
+                # Normal listening mode: accumulate speech segments
+                if speech_prob >= self._vad_threshold:
+                    if not self._in_speech:
+                        self._in_speech = True
+                        self._speech_start_time = timestamp
+                        self._speech_buffer = []
+                        self._silence_start_time = None
+                        logger.debug("VAD: speech start")
+                    self._speech_buffer.append(data[offset * 2:(offset + chunk_size) * 2])
+                    self._silence_start_time = None
+                else:
+                    if self._in_speech:
+                        if self._silence_start_time is None:
+                            self._silence_start_time = time.monotonic()
+                        self._speech_buffer.append(data[offset * 2:(offset + chunk_size) * 2])
+
+                        # Check if silence exceeds min_speech_duration threshold
+                        silence_ms = (time.monotonic() - self._silence_start_time) * 1000
+                        if silence_ms >= self._config.min_speech_duration_ms:
+                            self._emit_segment(timestamp)
 
             offset += chunk_size
 
@@ -267,13 +312,34 @@ class AudioPipeline:
             self._vad_model.reset_states()
 
     def _on_tts_start(self, _data: object) -> None:
-        """Gate microphone during TTS playback."""
-        self._mic_gated = True
-        if self._in_speech:
-            self._reset_speech()
-        logger.debug("Mic gated (TTS start)")
+        """Switch to barge-in detection mode during TTS playback."""
+        self._tts_playing = True
+        self._tts_start_time = time.monotonic()
+        self._reset_speech()
+        logger.debug("Barge-in detection active (TTS start)")
 
     def _on_tts_end(self, _data: object) -> None:
-        """Ungate microphone after TTS playback."""
-        self._mic_gated = False
-        logger.debug("Mic ungated (TTS end)")
+        """Return to normal listening mode after TTS playback."""
+        self._tts_playing = False
+        self._tts_start_time = None
+        if hasattr(self, "_aec"):
+            self._aec.reset()
+        logger.debug("Normal listening mode (TTS end)")
+
+    def _on_cae_status(self, data: object) -> None:
+        """Update CAE status from hardware."""
+        if isinstance(data, dict):
+            self._cae_status = data
+            logger.debug("CAE status updated: %s", data)
+
+    def _on_tts_audio_chunk(self, data: object) -> None:
+        """Feed TTS audio chunks to the software AEC as far-end reference."""
+        if not hasattr(self, "_aec"):
+            return
+        if isinstance(data, dict):
+            pcm_bytes = data.get("audio")
+            if isinstance(pcm_bytes, (bytes, bytearray)):
+                self._aec.feed_far(pcm_bytes)
+            elif hasattr(pcm_bytes, "tobytes"):
+                # numpy array or similar
+                self._aec.feed_far(pcm_bytes.tobytes())

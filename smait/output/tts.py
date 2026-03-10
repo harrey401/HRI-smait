@@ -1,7 +1,8 @@
-"""Kokoro-82M TTS: sentence-level streaming, mic gating."""
+"""Kokoro-82M TTS: sentence-level streaming, barge-in cancellation."""
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import re
 import time
@@ -28,9 +29,10 @@ class TTSEngine:
     4. Emit TTS_AUDIO_CHUNK -> ConnectionManager sends to Jackie
     5. Jackie plays audio through AudioTrack
 
-    Mic gating:
-    - Before first chunk: emit TTS_START -> Jackie gates mic
-    - After last chunk: emit TTS_END -> Jackie ungates mic
+    Barge-in cancellation:
+    - Before first chunk: emit TTS_START
+    - On BARGE_IN event: cancel current _tts_task (asyncio.Task.cancel())
+    - After last chunk or cancellation: emit TTS_END (always in finally block)
 
     Fallback: if Kokoro fails, send text via JSON for Android TTS.
     """
@@ -46,6 +48,12 @@ class TTSEngine:
         # Streaming state
         self._text_buffer = ""
         self._is_speaking = False
+
+        # Cancellable TTS task (set to current asyncio.Task during speak/speak_streaming)
+        self._tts_task: Optional[asyncio.Task] = None
+
+        # Subscribe to BARGE_IN for cancellation
+        event_bus.subscribe(EventType.BARGE_IN, self._on_barge_in)
 
     async def init_model(self) -> None:
         """Load Kokoro-82M TTS model."""
@@ -70,6 +78,12 @@ class TTSEngine:
     @property
     def available(self) -> bool:
         return self._available
+
+    def _on_barge_in(self, _data: object) -> None:
+        """Cancel the current TTS task on barge-in."""
+        if self._tts_task is not None and not self._tts_task.done():
+            logger.info("TTS: barge-in received — cancelling TTS task")
+            self._tts_task.cancel()
 
     async def synthesize(self, text: str) -> Optional[bytes]:
         """Synthesize a complete text string to PCM audio bytes.
@@ -110,12 +124,12 @@ class TTSEngine:
             return None
 
     async def speak(self, text: str) -> None:
-        """Speak a complete text with mic gating.
+        """Speak a complete text with barge-in support.
 
         For non-streaming use (e.g., greetings, farewell).
         """
-        # Emit TTS_START for mic gating
         self._is_speaking = True
+        self._tts_task = asyncio.current_task()
         await self._event_bus.emit_async(EventType.TTS_START)
 
         try:
@@ -131,8 +145,12 @@ class TTSEngine:
                         "text": text,
                         "fallback_tts": True,
                     })
+        except asyncio.CancelledError:
+            logger.info("TTS: speak() barge-in cancellation")
+            raise
         finally:
             self._is_speaking = False
+            self._tts_task = None
             await self._event_bus.emit_async(EventType.TTS_END)
 
     async def _speak_by_sentence(self, text: str) -> None:
@@ -161,8 +179,13 @@ class TTSEngine:
         - Buffer tokens from LLM
         - When sentence boundary detected -> synthesize that sentence
         - Stream audio to Jackie while LLM continues generating
+
+        Barge-in cancellation: if BARGE_IN is received while speaking,
+        _on_barge_in() cancels this task via asyncio.Task.cancel().
+        TTS_END is always emitted in the finally block.
         """
         self._is_speaking = True
+        self._tts_task = asyncio.current_task()
         await self._event_bus.emit_async(EventType.TTS_START)
 
         self._text_buffer = ""
@@ -194,8 +217,12 @@ class TTSEngine:
                     await self._event_bus.emit_async(EventType.TTS_AUDIO_CHUNK, {"audio": pcm})
             self._text_buffer = ""
 
+        except asyncio.CancelledError:
+            logger.info("TTS: speak_streaming() barge-in cancellation")
+            raise
         finally:
             self._is_speaking = False
+            self._tts_task = None
             await self._event_bus.emit_async(EventType.TTS_END)
 
     @property

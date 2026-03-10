@@ -24,6 +24,7 @@ class EventType(Enum):
 
     # Turn-taking
     END_OF_TURN = auto()
+    BARGE_IN = auto()
 
     # Vision
     FACE_DETECTED = auto()
