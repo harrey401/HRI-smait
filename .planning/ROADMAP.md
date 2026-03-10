@@ -63,7 +63,7 @@ Plans:
 - [ ] 02-02-PLAN.md — Protocol and ConnectionManager TTS audio forwarding tests
 
 ### Phase 3: Vision Pipeline Code
-**Goal**: Gaze estimation and lip extraction code rewritten for correct model APIs and Dolphin-compatible output
+**Goal**: Fix lip_roi_size config for Dolphin compatibility and write comprehensive unit tests for all four vision modules
 **Location**: HOME
 **Depends on**: Phase 1 (L2CS-Net installed, stub fixed)
 **Requirements**: VIS-01, VIS-02, VIS-03, VIS-04
@@ -73,9 +73,11 @@ Plans:
   3. Engagement detector logic uses gaze duration (>2s) + face area + DOA angles
   4. Unit tests verify lip frame output shape, gaze angle format, and engagement thresholds with mocked inputs
 
+**Plans:** 2 plans
+
 Plans:
-- [ ] 03-01: TBD
-- [ ] 03-02: TBD
+- [ ] 03-01-PLAN.md — Fix lip_roi_size config to 88x88, write LipExtractor and GazeEstimator L2CS tests
+- [ ] 03-02-PLAN.md — Write EngagementDetector state machine and FaceTracker IOU tests
 
 ### Phase 4: Speaker Separation Code
 **Goal**: Dolphin separator rewritten with correct look2hear API, mono audio input, grayscale lip video input
