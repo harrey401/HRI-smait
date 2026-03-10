@@ -64,7 +64,6 @@ class EventBus:
 
     def __init__(self) -> None:
         self._handlers: dict[EventType, list[Callable]] = {}
-        self._loop: asyncio.AbstractEventLoop | None = None
 
     def subscribe(self, event_type: EventType, handler: Callable) -> None:
         """Register a handler for an event type."""
@@ -89,21 +88,18 @@ class EventBus:
         if not handlers:
             return
 
-        loop = self._loop
-        if loop is None:
-            try:
-                loop = asyncio.get_running_loop()
-                self._loop = loop
-            except RuntimeError:
-                # No running loop — call sync handlers directly
-                for handler in handlers:
-                    if not asyncio.iscoroutinefunction(handler):
-                        try:
-                            handler(data)
-                        except Exception:
-                            logger.exception("Error in sync handler %s for %s",
-                                             handler.__qualname__, event_type.name)
-                return
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            # No running loop — call sync handlers directly
+            for handler in handlers:
+                if not asyncio.iscoroutinefunction(handler):
+                    try:
+                        handler(data)
+                    except Exception:
+                        logger.exception("Error in sync handler %s for %s",
+                                         handler.__qualname__, event_type.name)
+            return
 
         for handler in handlers:
             if asyncio.iscoroutinefunction(handler):
