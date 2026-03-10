@@ -235,6 +235,41 @@ class EngagementDetector:
         else:
             self._disengage_start = None
 
+    def _doa_score_for_face(
+        self,
+        track: FaceTrack,
+        frame_width: int = 640,
+        camera_fov_deg: float = 60.0,
+    ) -> float:
+        """Return DOA alignment multiplier based on angular proximity.
+
+        Maps the face's pixel position to a camera angle, then computes how
+        closely it aligns with the DOA direction. Returns 1.0 for perfect
+        alignment and 0.5 for a face 90+ degrees away from DOA.
+
+        Args:
+            track: FaceTrack with bbox=(x, y, w, h)
+            frame_width: Camera frame width in pixels (default 640)
+            camera_fov_deg: Camera horizontal field of view in degrees (default 60)
+
+        Returns:
+            Multiplier in [0.5, 1.0] — higher means closer to DOA direction.
+        """
+        if self._last_doa_angle is None:
+            return 1.0  # No DOA data — no penalty applied
+
+        # FaceTrack.bbox is (x, y, w, h)
+        x, _y, w, _h = track.bbox
+        face_center_x = x + w / 2
+
+        # Map pixel X to camera angle: center=0, left=negative, right=positive
+        normalized = (face_center_x / frame_width) - 0.5  # [-0.5, 0.5]
+        face_angle_deg = normalized * camera_fov_deg
+
+        # DOA: 0=front, negative=left, positive=right
+        angular_distance = abs(face_angle_deg - self._last_doa_angle)
+        return max(0.5, 1.0 - angular_distance / 90.0)
+
     def _select_primary_user(
         self,
         tracks: list[FaceTrack],
@@ -248,10 +283,8 @@ class EngagementDetector:
                 if track.face_area >= self._config.face_area_threshold:
                     if not self._is_walking_past(track.track_id):
                         score = track.face_area
-                        # DOA alignment bonus
-                        if self._last_doa_angle is not None:
-                            # Rough face-to-DOA alignment
-                            score *= 1.2
+                        # Per-face DOA alignment scoring (angular proximity)
+                        score *= self._doa_score_for_face(track)
                         candidates.append((score, track))
 
         if not candidates:
