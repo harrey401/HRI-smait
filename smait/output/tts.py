@@ -86,7 +86,15 @@ class TTSEngine:
             for _graphemes, _phonemes, audio in self._pipeline(
                 text, voice=self._voice, speed=1.0
             ):
-                # audio is numpy float32 at 24kHz
+                # KPipeline quiet mode yields None audio — skip silently
+                if audio is None:
+                    continue
+                # GPU path: KPipeline may yield torch tensors instead of numpy arrays
+                if hasattr(audio, "cpu"):
+                    audio = audio.cpu().numpy()
+                elif not isinstance(audio, np.ndarray):
+                    audio = np.array(audio)
+                # Convert float32 to int16 PCM with clipping
                 pcm = (audio * 32767).clip(-32768, 32767).astype(np.int16)
                 pcm_parts.append(pcm.tobytes())
 
@@ -108,7 +116,7 @@ class TTSEngine:
         """
         # Emit TTS_START for mic gating
         self._is_speaking = True
-        self._event_bus.emit(EventType.TTS_START)
+        await self._event_bus.emit_async(EventType.TTS_START)
 
         try:
             if self._config.stream_by_sentence:
@@ -116,16 +124,16 @@ class TTSEngine:
             else:
                 pcm = await self.synthesize(text)
                 if pcm:
-                    self._event_bus.emit(EventType.TTS_AUDIO_CHUNK, {"audio": pcm})
+                    await self._event_bus.emit_async(EventType.TTS_AUDIO_CHUNK, {"audio": pcm})
                 else:
                     # Fallback to Android TTS
-                    self._event_bus.emit(EventType.DIALOGUE_RESPONSE, {
+                    await self._event_bus.emit_async(EventType.DIALOGUE_RESPONSE, {
                         "text": text,
                         "fallback_tts": True,
                     })
         finally:
             self._is_speaking = False
-            self._event_bus.emit(EventType.TTS_END)
+            await self._event_bus.emit_async(EventType.TTS_END)
 
     async def _speak_by_sentence(self, text: str) -> None:
         """Split text into sentences and synthesize each one."""
@@ -138,10 +146,10 @@ class TTSEngine:
         for sentence in sentences:
             pcm = await self.synthesize(sentence)
             if pcm:
-                self._event_bus.emit(EventType.TTS_AUDIO_CHUNK, {"audio": pcm})
+                await self._event_bus.emit_async(EventType.TTS_AUDIO_CHUNK, {"audio": pcm})
             else:
                 # Fallback for this sentence
-                self._event_bus.emit(EventType.DIALOGUE_RESPONSE, {
+                await self._event_bus.emit_async(EventType.DIALOGUE_RESPONSE, {
                     "text": sentence,
                     "fallback_tts": True,
                 })
@@ -155,10 +163,9 @@ class TTSEngine:
         - Stream audio to Jackie while LLM continues generating
         """
         self._is_speaking = True
-        self._event_bus.emit(EventType.TTS_START)
+        await self._event_bus.emit_async(EventType.TTS_START)
 
         self._text_buffer = ""
-        first_chunk = True
 
         try:
             async for chunk in text_generator:
@@ -177,19 +184,19 @@ class TTSEngine:
                     if sentence:
                         pcm = await self.synthesize(sentence)
                         if pcm:
-                            self._event_bus.emit(EventType.TTS_AUDIO_CHUNK, {"audio": pcm})
+                            await self._event_bus.emit_async(EventType.TTS_AUDIO_CHUNK, {"audio": pcm})
 
             # Flush remaining text
             remaining = self._text_buffer.strip()
             if remaining:
                 pcm = await self.synthesize(remaining)
                 if pcm:
-                    self._event_bus.emit(EventType.TTS_AUDIO_CHUNK, {"audio": pcm})
+                    await self._event_bus.emit_async(EventType.TTS_AUDIO_CHUNK, {"audio": pcm})
             self._text_buffer = ""
 
         finally:
             self._is_speaking = False
-            self._event_bus.emit(EventType.TTS_END)
+            await self._event_bus.emit_async(EventType.TTS_END)
 
     @property
     def is_speaking(self) -> bool:
