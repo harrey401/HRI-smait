@@ -56,9 +56,11 @@ Plans:
   3. TTS audio encoded as 0x05 binary frames for WebSocket transmission
   4. Unit tests verify streaming behavior with mocked KPipeline
 
+**Plans:** 2 plans
+
 Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
+- [ ] 02-01-PLAN.md — Fix TTSEngine emit_async streaming, GPU-safe audio conversion, streaming tests
+- [ ] 02-02-PLAN.md — Protocol and ConnectionManager TTS audio forwarding tests
 
 ### Phase 3: Vision Pipeline Code
 **Goal**: Gaze estimation and lip extraction code rewritten for correct model APIs and Dolphin-compatible output
