@@ -4,7 +4,7 @@ milestone: v1.0
 milestone_name: milestone
 status: planning
 stopped_at: Completed 03-vision-pipeline-code plan 02 (03-02-PLAN.md)
-last_updated: "2026-03-10T07:58:18.019Z"
+last_updated: "2026-03-10T08:01:15.099Z"
 last_activity: 2026-03-09 -- Roadmap restructured for HOME/LAB split
 progress:
   total_phases: 8
