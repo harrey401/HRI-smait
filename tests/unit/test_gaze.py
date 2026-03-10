@@ -93,6 +93,66 @@ def test_correct_arch_param(config, event_bus):
     )
 
 
+def test_l2cs_step_result_parsed(config, event_bus):
+    """estimate() parses L2CS step() results: yaw=[15.0], pitch=[-8.0] -> GazeResult."""
+    import numpy as np
+
+    est = GazeEstimator(config, event_bus)
+    est._l2cs_pipeline = MagicMock()
+    est._l2cs_pipeline.step.return_value = MagicMock(yaw=[15.0], pitch=[-8.0])
+
+    track = _FakeTrack(track_id=10, head_yaw=0.0, head_pitch=0.0)
+    image = np.zeros((200, 200, 3), dtype=np.uint8)
+
+    result = est.estimate(image, track, timestamp=0.0)
+
+    assert isinstance(result, GazeResult)
+    assert result.yaw_deg == 15.0, f"Expected yaw_deg=15.0, got {result.yaw_deg}"
+    assert result.pitch_deg == -8.0, f"Expected pitch_deg=-8.0, got {result.pitch_deg}"
+    # |15| < 30 and |-8| < 20 => is_looking_at_robot must be True
+    assert result.is_looking_at_robot is True, (
+        f"Expected is_looking_at_robot=True for yaw=15, pitch=-8"
+    )
+
+
+def test_l2cs_step_empty_result_falls_back(config, event_bus):
+    """estimate() falls back to head pose when step() returns yaw=[], pitch=[]."""
+    import numpy as np
+
+    est = GazeEstimator(config, event_bus)
+    est._l2cs_pipeline = MagicMock()
+    est._l2cs_pipeline.step.return_value = MagicMock(yaw=[], pitch=[])
+
+    track = _FakeTrack(track_id=11, head_yaw=20.0, head_pitch=5.0)
+    image = np.zeros((200, 200, 3), dtype=np.uint8)
+
+    result = est.estimate(image, track, timestamp=0.0)
+
+    assert result.yaw_deg == track.head_yaw, (
+        f"Expected yaw_deg={track.head_yaw} (head pose fallback), got {result.yaw_deg}"
+    )
+    assert result.pitch_deg == track.head_pitch
+
+
+def test_l2cs_step_exception_falls_back(config, event_bus):
+    """estimate() falls back to head pose when step() raises RuntimeError."""
+    import numpy as np
+
+    est = GazeEstimator(config, event_bus)
+    est._l2cs_pipeline = MagicMock()
+    est._l2cs_pipeline.step.side_effect = RuntimeError("GPU OOM")
+
+    track = _FakeTrack(track_id=12, head_yaw=-10.0, head_pitch=2.0)
+    image = np.zeros((200, 200, 3), dtype=np.uint8)
+
+    result = est.estimate(image, track, timestamp=0.0)
+
+    assert result.yaw_deg == track.head_yaw, (
+        f"Expected yaw_deg={track.head_yaw} (head pose fallback), got {result.yaw_deg}"
+    )
+    assert result.pitch_deg == track.head_pitch
+
+
 def test_install_instruction_updated():
     """QUAL-01: ImportError warning must reference edavalosanaya fork, not Ahmednull."""
     import pathlib
