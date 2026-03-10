@@ -11,6 +11,9 @@ docs/spec-page*
 docs/hardware-sdk/
 mockup*
 
+# Dolphin full repo (too large) — look2hear/ is committed separately
+vendor/
+
 # Private hardware specs
 docs/JACKIE_HARDWARE.md
 docs/jackie-spec-sheet.pdf
