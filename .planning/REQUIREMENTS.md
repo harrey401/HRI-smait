@@ -25,12 +25,12 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 ### Speaker Separation
 
-- [ ] **SEP-01**: Dolphin AV-TSE loaded with correct API (`from look2hear.models import Dolphin`)
-- [ ] **SEP-02**: Audio input preprocessed to mono `[1, samples]` at 16kHz for Dolphin
-- [ ] **SEP-03**: Lip frames preprocessed to 88x88 grayscale at 25fps for Dolphin
-- [ ] **SEP-04**: Audio-visual temporal sync via server-side monotonic timestamps
+- [x] **SEP-01**: Dolphin AV-TSE loaded with correct API (`from look2hear.models import Dolphin`)
+- [x] **SEP-02**: Audio input preprocessed to mono `[1, samples]` at 16kHz for Dolphin
+- [x] **SEP-03**: Lip frames preprocessed to 88x88 grayscale at 25fps for Dolphin
+- [x] **SEP-04**: Audio-visual temporal sync via server-side monotonic timestamps
 - [ ] **SEP-05**: DOA angles integrated into engagement detector for multi-speaker disambiguation
-- [ ] **SEP-06**: Fallback to CAE passthrough audio when Dolphin is unavailable
+- [x] **SEP-06**: Fallback to CAE passthrough audio when Dolphin is unavailable
 
 ### Speech Recognition
 

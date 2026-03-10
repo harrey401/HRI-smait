@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 03-vision-pipeline-code plan 02 (03-02-PLAN.md)
-last_updated: "2026-03-10T08:01:15.099Z"
+stopped_at: Completed 04-speaker-separation-code plan 01 (04-01-PLAN.md)
+last_updated: "2026-03-10T08:28:33.932Z"
 last_activity: 2026-03-09 -- Roadmap restructured for HOME/LAB split
 progress:
   total_phases: 8
   completed_phases: 3
-  total_plans: 7
-  completed_plans: 7
+  total_plans: 9
+  completed_plans: 8
   percent: 33
 ---
 
@@ -63,6 +63,7 @@ Progress: [███░░░░░░░] 33%
 | Phase 02-tts-pipeline-code P01 | 8m | 1 tasks | 2 files |
 | Phase 03-vision-pipeline-code P01 | 2min | 2 tasks | 3 files |
 | Phase 03-vision-pipeline-code P02 | 4min | 2 tasks | 2 files |
+| Phase 04-speaker-separation-code P01 | 2m42s | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -91,6 +92,9 @@ Recent decisions affecting current work:
 - [Phase 03-vision-pipeline-code]: GazeEstimator L2CS tests went straight to GREEN — production code already handles empty yaw/pitch and RuntimeError
 - [Phase 03-vision-pipeline-code]: Walking-past test must prime area history with gaze=OFF first: filter requires >=3 entries before suppressing approach, gaze=ON at t=0 causes APPROACHING before history exists
 - [Phase 03-vision-pipeline-code]: Patch smait.perception.face_tracker.mp (module-level alias) not mediapipe.solutions.face_mesh — mediapipe.solutions is not installed in this environment
+- [Phase 04-speaker-separation-code]: Early exit passthrough before _run_dolphin when lip_frames=[] prevents audio-only Dolphin TypeError crash
+- [Phase 04-speaker-separation-code]: torch.inference_mode() replaces torch.no_grad() in DolphinSeparator — faster, disables grad tracking entirely
+- [Phase 04-speaker-separation-code]: main.py always passes segment.cae_audio to Dolphin with channels=1 — raw 4-channel is wrong input for Dolphin mono model
 
 ### Pending Todos
 
@@ -105,6 +109,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-10T07:58:18.017Z
-Stopped at: Completed 03-vision-pipeline-code plan 02 (03-02-PLAN.md)
+Last session: 2026-03-10T08:28:33.930Z
+Stopped at: Completed 04-speaker-separation-code plan 01 (04-01-PLAN.md)
 Resume file: None

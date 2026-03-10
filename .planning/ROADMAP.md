@@ -92,7 +92,7 @@ Plans:
   5. Fallback to CAE passthrough when Dolphin unavailable
   6. Unit tests verify tensor shapes, sync logic, and fallback behavior with mocked Dolphin model
 
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
 - [ ] 04-01-PLAN.md — Fix DolphinSeparator passthrough on empty lip_frames, audio routing bug in main.py, inference_mode
@@ -177,7 +177,7 @@ Phase 6 (Android) code can be written alongside Phases 2-5, but hardware testing
 | 1. Dependency Setup & Stub API Fixes | 3/3 | Complete   | 2026-03-10 | - |
 | 2. TTS Pipeline Code | 2/2 | Complete   | 2026-03-10 | - |
 | 3. Vision Pipeline Code | 2/2 | Complete   | 2026-03-10 | - |
-| 4. Speaker Separation Code | HOME | 0/2 | Not started | - |
+| 4. Speaker Separation Code | 1/2 | In Progress|  | - |
 | 5. Turn-Taking & AEC Code | HOME | 0/2 | Not started | - |
 | 6. Android Audio Pipeline | HOME+LAB | 0/2 | Not started | - |
 | 7. GPU Validation & Model Loading | LAB | 0/2 | Not started | - |
