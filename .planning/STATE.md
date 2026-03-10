@@ -4,7 +4,7 @@ milestone: v1.0
 milestone_name: milestone
 status: planning
 stopped_at: Completed 05-turn-taking-aec-code plan 02 (05-02-PLAN.md)
-last_updated: "2026-03-10T10:14:34.067Z"
+last_updated: "2026-03-10T10:21:00.095Z"
 last_activity: 2026-03-09 -- Roadmap restructured for HOME/LAB split
 progress:
   total_phases: 8
