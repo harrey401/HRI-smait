@@ -102,50 +102,53 @@ Deferred to future milestone. Tracked but not in current roadmap.
 
 ## Traceability
 
-| Requirement | Phase | Status |
-|-------------|-------|--------|
-| ENV-01 | Phase 1 | Pending |
-| ENV-02 | Phase 1 | Pending |
-| ENV-03 | Phase 1 | Pending |
-| AUD-01 | Phase 2 | Pending |
-| AUD-02 | Phase 2 | Pending |
-| AUD-03 | Phase 2 | Pending |
-| AUD-04 | Phase 2 | Pending |
-| AUD-05 | Phase 5 | Pending |
-| AUD-06 | Phase 6 | Pending |
-| AUD-07 | Phase 6 | Pending |
-| SEP-01 | Phase 5 | Pending |
-| SEP-02 | Phase 5 | Pending |
-| SEP-03 | Phase 5 | Pending |
-| SEP-04 | Phase 5 | Pending |
-| SEP-05 | Phase 5 | Pending |
-| SEP-06 | Phase 5 | Pending |
-| ASR-01 | Phase 1 | Pending |
-| ASR-02 | Phase 6 | Pending |
-| ASR-03 | Phase 6 | Pending |
-| VIS-01 | Phase 4 | Pending |
-| VIS-02 | Phase 4 | Pending |
-| VIS-03 | Phase 4 | Pending |
-| VIS-04 | Phase 4 | Pending |
-| TTS-01 | Phase 3 | Pending |
-| TTS-02 | Phase 3 | Pending |
-| TTS-03 | Phase 3 | Pending |
-| TTS-04 | Phase 3 | Pending |
-| CONV-01 | Phase 7 | Pending |
-| CONV-02 | Phase 7 | Pending |
-| CONV-03 | Phase 7 | Pending |
-| CONV-04 | Phase 7 | Pending |
-| QUAL-01 | Phase 1 | Pending |
-| QUAL-02 | Phase 7 | Pending |
-| QUAL-03 | Phase 7 | Pending |
-| QUAL-04 | Phase 7 | Pending |
-| QUAL-05 | Phase 7 | Pending |
+| Requirement | Phase | Location | Status |
+|-------------|-------|----------|--------|
+| ENV-01 | Phase 7 | LAB | Pending |
+| ENV-02 | Phase 7 | LAB | Pending |
+| ENV-03 | Phase 1 | HOME | Pending |
+| AUD-01 | Phase 6 | HOME+LAB | Pending |
+| AUD-02 | Phase 6 | HOME+LAB | Pending |
+| AUD-03 | Phase 6 | HOME+LAB | Pending |
+| AUD-04 | Phase 6 | HOME+LAB | Pending |
+| AUD-05 | Phase 4 | HOME | Pending |
+| AUD-06 | Phase 5 | HOME | Pending |
+| AUD-07 | Phase 5 | HOME | Pending |
+| SEP-01 | Phase 4 | HOME | Pending |
+| SEP-02 | Phase 4 | HOME | Pending |
+| SEP-03 | Phase 4 | HOME | Pending |
+| SEP-04 | Phase 4 | HOME | Pending |
+| SEP-05 | Phase 4 | HOME | Pending |
+| SEP-06 | Phase 4 | HOME | Pending |
+| ASR-01 | Phase 7 | LAB | Pending |
+| ASR-02 | Phase 5 | HOME | Pending |
+| ASR-03 | Phase 5 | HOME | Pending |
+| VIS-01 | Phase 3 | HOME | Pending |
+| VIS-02 | Phase 3 | HOME | Pending |
+| VIS-03 | Phase 3 | HOME | Pending |
+| VIS-04 | Phase 3 | HOME | Pending |
+| TTS-01 | Phase 2 | HOME | Pending |
+| TTS-02 | Phase 2 | HOME | Pending |
+| TTS-03 | Phase 2 | HOME | Pending |
+| TTS-04 | Phase 6 | HOME+LAB | Pending |
+| CONV-01 | Phase 8 | LAB | Pending |
+| CONV-02 | Phase 8 | LAB | Pending |
+| CONV-03 | Phase 8 | LAB | Pending |
+| CONV-04 | Phase 8 | LAB | Pending |
+| QUAL-01 | Phase 1 | HOME | Pending |
+| QUAL-02 | Phase 8 | LAB | Pending |
+| QUAL-03 | Phase 8 | LAB | Pending |
+| QUAL-04 | Phase 8 | LAB | Pending |
+| QUAL-05 | Phase 8 | LAB | Pending |
 
 **Coverage:**
 - v1 requirements: 35 total
 - Mapped to phases: 35
 - Unmapped: 0
+- HOME phases: 1-5 (can do from home)
+- LAB phases: 7-8 (need RTX 5070 + robot)
+- MIXED: Phase 6 (code at home, test in lab)
 
 ---
 *Requirements defined: 2026-03-09*
-*Last updated: 2026-03-09 after roadmap creation*
+*Last updated: 2026-03-09 after HOME/LAB restructure*

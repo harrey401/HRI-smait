@@ -2,7 +2,7 @@
 
 ## Overview
 
-Transform the SMAIT v3 HRI system from stub-based architecture to fully operational audio-visual ML pipeline. The journey starts by establishing a working GPU environment and fixing broken stub APIs, then builds outward through individual model integrations (TTS, vision, speaker separation), layering in conversation flow mechanics, and culminating in full end-to-end integration with quality validation. Android CAE work runs early and in parallel since it is decoupled from server-side model work.
+Transform the SMAIT v3 HRI system from stub-based architecture to fully operational audio-visual ML pipeline. The roadmap is split into HOME phases (code writing, stub fixes, unit tests with mocked models) and LAB phases (GPU validation, hardware testing, E2E integration). This lets you maximize progress from home, then validate everything in focused lab sessions.
 
 ## Phases
 
@@ -12,140 +12,166 @@ Transform the SMAIT v3 HRI system from stub-based architecture to fully operatio
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Environment & API Foundation** - Verify sm_120 GPU, vendor Dolphin, fix all stub APIs
-- [ ] **Phase 2: Android Audio Pipeline** - Merge CAE beamforming, send 3 streams + DOA from app
-- [ ] **Phase 3: TTS Pipeline** - Integrate Kokoro-82M with streaming playback to Android
-- [ ] **Phase 4: Vision Pipeline** - Activate gaze estimation, lip extraction, and engagement detection
-- [ ] **Phase 5: Speaker Separation** - Integrate Dolphin AV-TSE with audio-visual fusion
-- [ ] **Phase 6: Turn-Taking & Echo Cancellation** - VAD-based EOU, AEC research, barge-in support
-- [ ] **Phase 7: Full Integration & Quality** - Wire conversation loop, optimize latency, test coverage
+### HOME phases (no GPU/robot needed):
+- [ ] **Phase 1: Dependency Setup & Stub API Fixes** - Vendor Dolphin, fix all stub APIs, install packages
+- [ ] **Phase 2: TTS Pipeline Code** - Rewrite Kokoro integration with correct KPipeline API
+- [ ] **Phase 3: Vision Pipeline Code** - Rewrite L2CS-Net gaze, lip extraction for Dolphin format
+- [ ] **Phase 4: Speaker Separation Code** - Rewrite Dolphin separator with correct API and tensor shapes
+- [ ] **Phase 5: Turn-Taking & AEC Code** - VAD-based EOU, AEC research, barge-in logic
+- [ ] **Phase 6: Android Audio Pipeline** - Merge CAE beamforming, 3 streams + DOA, AudioTrack playback
+
+### LAB phases (RTX 5070 + robot required):
+- [ ] **Phase 7: GPU Validation & Model Loading** - Verify all models on sm_120, VRAM budget, Parakeet ASR
+- [ ] **Phase 8: Full Integration & Quality** - End-to-end conversation loop, latency tuning, 80% coverage
 
 ## Phase Details
 
-### Phase 1: Environment & API Foundation
-**Goal**: Every ML model can be imported and instantiated on the Blackwell GPU without errors
+### Phase 1: Dependency Setup & Stub API Fixes
+**Goal**: All ML model code uses correct imports, classes, and tensor shapes — ready for GPU testing
+**Location**: HOME
 **Depends on**: Nothing (first phase)
-**Requirements**: ENV-01, ENV-02, ENV-03, QUAL-01, ASR-01
+**Requirements**: ENV-03, QUAL-01
 **Success Criteria** (what must be TRUE):
-  1. PyTorch nightly loads and reports sm_120 CUDA capability on the RTX 5070
-  2. Parakeet TDT ASR runs a test transcription on the Blackwell GPU with CUDA graphs disabled
-  3. Dolphin source is vendored and `from look2hear.models import Dolphin` succeeds
-  4. All stub imports and class instantiations across Dolphin, Kokoro, L2CS-Net, and ASR match their real APIs (no ImportError or wrong class names)
-  5. All models load simultaneously and `nvidia-smi` confirms total VRAM usage under 12GB
-**Plans**: TBD
+  1. Dolphin source is vendored into the project and `from look2hear.models import Dolphin` succeeds (CPU import, no GPU needed)
+  2. All stub files corrected: dolphin_separator.py, tts.py, gaze.py, eou_detector.py use real API signatures
+  3. Kokoro installed via `pip install kokoro>=0.9.4`
+  4. L2CS-Net installed from maintained fork
+  5. Unit tests with mocked models pass for all corrected stubs
 
 Plans:
 - [ ] 01-01: TBD
 - [ ] 01-02: TBD
 - [ ] 01-03: TBD
 
-### Phase 2: Android Audio Pipeline
-**Goal**: The Android app captures and transmits beamformed audio, raw audio, video, and DOA angles to the server
-**Depends on**: Phase 1 (server must accept streams correctly)
-**Requirements**: AUD-01, AUD-02, AUD-03, AUD-04
+### Phase 2: TTS Pipeline Code
+**Goal**: Kokoro TTS wrapper rewritten with correct KPipeline API and sentence-level streaming
+**Location**: HOME
+**Depends on**: Phase 1 (Kokoro installed, stub fixed)
+**Requirements**: TTS-01, TTS-02, TTS-03
 **Success Criteria** (what must be TRUE):
-  1. CAE beamforming code from cae-work-march2 is merged and the 8ch-to-4ch format mismatch is resolved in hlw.ini
-  2. Android app sends three binary streams over WebSocket: CAE audio (0x01), raw 4-channel audio (0x03), and video frames (0x02)
-  3. Android app sends DOA angle JSON messages from CAE callbacks, and server logs receive them
-  4. Server demuxes all three streams and DOA messages without errors or dropped frames
-**Plans**: TBD
+  1. TTSEngine uses `KPipeline(lang_code='a')` generator API, yielding `(graphemes, phonemes, audio)` tuples
+  2. Sentence-level streaming works: first sentence audio emitted before full response is synthesized
+  3. TTS audio encoded as 0x05 binary frames for WebSocket transmission
+  4. Unit tests verify streaming behavior with mocked KPipeline
 
 Plans:
 - [ ] 02-01: TBD
 - [ ] 02-02: TBD
 
-### Phase 3: TTS Pipeline
-**Goal**: The robot speaks using Kokoro TTS with streaming sentence-level synthesis played back on the Android device
-**Depends on**: Phase 1 (Kokoro API stubs fixed), Phase 2 (Android receives 0x05 frames)
-**Requirements**: TTS-01, TTS-02, TTS-03, TTS-04
+### Phase 3: Vision Pipeline Code
+**Goal**: Gaze estimation and lip extraction code rewritten for correct model APIs and Dolphin-compatible output
+**Location**: HOME
+**Depends on**: Phase 1 (L2CS-Net installed, stub fixed)
+**Requirements**: VIS-01, VIS-02, VIS-03, VIS-04
 **Success Criteria** (what must be TRUE):
-  1. Kokoro-82M loads via `KPipeline(lang_code='a')` and generates 24kHz audio from text
-  2. TTS streams audio sentence-by-sentence (not word-by-word), with the first sentence arriving before the full response is synthesized
-  3. Server sends TTS audio as 0x05 binary frames over WebSocket
-  4. Android app receives 0x05 frames and plays audio through AudioTrack speaker with no clipping or gaps
-**Plans**: TBD
+  1. GazeEstimator uses `arch='ResNet50'` (not `Gaze360`) with correct L2CS Pipeline API
+  2. LipExtractor produces 88x88 grayscale mouth ROI from MediaPipe landmarks (Dolphin-compatible)
+  3. Engagement detector logic uses gaze duration (>2s) + face area + DOA angles
+  4. Unit tests verify lip frame output shape, gaze angle format, and engagement thresholds with mocked inputs
 
 Plans:
 - [ ] 03-01: TBD
 - [ ] 03-02: TBD
 
-### Phase 4: Vision Pipeline
-**Goal**: The server extracts gaze direction, lip regions, and engagement state from camera video frames
-**Depends on**: Phase 1 (L2CS-Net stub fixed)
-**Requirements**: VIS-01, VIS-02, VIS-03, VIS-04
+### Phase 4: Speaker Separation Code
+**Goal**: Dolphin separator rewritten with correct look2hear API, mono audio input, grayscale lip video input
+**Location**: HOME
+**Depends on**: Phase 1 (Dolphin vendored), Phase 3 (lip extraction format defined)
+**Requirements**: SEP-01, SEP-02, SEP-03, SEP-04, SEP-05, SEP-06, AUD-05
 **Success Criteria** (what must be TRUE):
-  1. L2CS-Net loads with `arch='ResNet50'` and produces yaw/pitch gaze angles per detected face
-  2. Lip extraction produces 88x88 grayscale mouth ROI crops from MediaPipe landmarks, compatible with Dolphin input spec
-  3. Engagement detector triggers after sustained gaze (>2 seconds) toward the robot
-  4. Face tracking maintains persistent IDs across consecutive frames using existing MediaPipe + IOU tracking
-**Plans**: TBD
+  1. DolphinSeparator uses `from look2hear.models import Dolphin` with correct tensor shapes: audio `[1, samples]` mono 16kHz, video `[1, 1, frames, 88, 88, 1]` grayscale
+  2. Audio-visual temporal sync logic aligns lip frames to speech segments via monotonic timestamps
+  3. VAD speech segmentation feeds correctly sized segments to Dolphin
+  4. DOA angle integration in engagement detector for multi-speaker disambiguation
+  5. Fallback to CAE passthrough when Dolphin unavailable
+  6. Unit tests verify tensor shapes, sync logic, and fallback behavior with mocked Dolphin model
 
 Plans:
 - [ ] 04-01: TBD
 - [ ] 04-02: TBD
+- [ ] 04-03: TBD
 
-### Phase 5: Speaker Separation
-**Goal**: Dolphin AV-TSE isolates the target speaker's voice using lip video and beamformed audio
-**Depends on**: Phase 1 (Dolphin vendored), Phase 4 (lip extraction ready)
-**Requirements**: SEP-01, SEP-02, SEP-03, SEP-04, SEP-05, SEP-06, AUD-05
+### Phase 5: Turn-Taking & AEC Code
+**Goal**: VAD-based end-of-utterance replaces LiveKit EOU, AEC approach researched and coded, barge-in logic written
+**Location**: HOME
+**Depends on**: Phase 2 (TTS code ready for echo testing logic)
+**Requirements**: ASR-02, ASR-03, AUD-06, AUD-07
 **Success Criteria** (what must be TRUE):
-  1. Dolphin loads from vendored source and processes mono 16kHz audio `[1, samples]` with grayscale lip frames `[1, 1, frames, 88, 88, 1]`
-  2. Audio-visual temporal sync aligns lip frames to speech segments using server-side monotonic timestamps
-  3. Silero VAD segments speech from CAE audio with ring buffer, feeding segments to Dolphin
-  4. DOA angles from Android are consumed by engagement detector for multi-speaker disambiguation
-  5. When Dolphin is unavailable, system falls back to CAE passthrough audio without crashing
-**Plans**: TBD
+  1. EOUDetector rewritten to use Silero VAD silence thresholds (~1.8s) instead of LiveKit model
+  2. ASR hallucination filtering logic implemented (confidence threshold + phrase blocklist)
+  3. AEC approach researched and documented: CAE SDK AEC capabilities vs software AEC (speexdsp/WebRTC)
+  4. Barge-in logic written: detect user speech during TTS, stop TTS, resume listening
+  5. Unit tests verify EOU timing, hallucination rejection, and barge-in state transitions
 
 Plans:
 - [ ] 05-01: TBD
 - [ ] 05-02: TBD
-- [ ] 05-03: TBD
 
-### Phase 6: Turn-Taking & Echo Cancellation
-**Goal**: The robot knows when the user has finished speaking and can listen while speaking (barge-in)
-**Depends on**: Phase 3 (TTS active for echo cancellation testing), Phase 5 (VAD feeding pipeline)
-**Requirements**: ASR-02, ASR-03, AUD-06, AUD-07
+### Phase 6: Android Audio Pipeline
+**Goal**: Android app code updated for CAE beamforming, 3 streams, DOA, and AudioTrack TTS playback
+**Location**: HOME (code writing) + LAB (hardware testing)
+**Depends on**: Phase 1 (server protocol verified)
+**Requirements**: AUD-01, AUD-02, AUD-03, AUD-04, TTS-04
 **Success Criteria** (what must be TRUE):
-  1. VAD-based end-of-utterance detection triggers after ~1.8 seconds of silence, replacing LiveKit EOU
-  2. ASR hallucination filtering rejects phantom transcripts using confidence thresholds and phrase blocklist
-  3. Acoustic echo cancellation (CAE SDK AEC or software AEC -- best approach from research) replaces mic gating
-  4. User can interrupt the robot mid-response (barge-in), causing TTS to stop and the robot to listen
-**Plans**: TBD
+  1. CAE beamforming merged from cae-work-march2 via revert-the-revert, 8ch-to-4ch resolved in hlw.ini
+  2. App sends three binary streams: CAE audio (0x01), raw 4-channel audio (0x03), video (0x02)
+  3. App sends DOA angle JSON from CAE callbacks
+  4. App receives 0x05 TTS frames and plays via AudioTrack
+  5. Server demuxes all streams and DOA without errors (verified in lab)
 
 Plans:
 - [ ] 06-01: TBD
 - [ ] 06-02: TBD
 
-### Phase 7: Full Integration & Quality
-**Goal**: Complete conversation loop works end-to-end with production quality and test coverage
-**Depends on**: All previous phases
-**Requirements**: CONV-01, CONV-02, CONV-03, CONV-04, QUAL-02, QUAL-03, QUAL-04, QUAL-05
+### Phase 7: GPU Validation & Model Loading
+**Goal**: All models verified on RTX 5070 Blackwell sm_120, VRAM budget confirmed, Parakeet ASR tested
+**Location**: LAB
+**Depends on**: Phases 1-5 (all code written and unit-tested)
+**Requirements**: ENV-01, ENV-02, ASR-01
 **Success Criteria** (what must be TRUE):
-  1. Full conversation loop works: engagement detection triggers greeting, user speaks, speech is separated and transcribed, LLM generates response, TTS plays back on robot
-  2. Session state machine drives lifecycle correctly (idle to approaching to engaged to conversing to disengaging)
-  3. Robot proactively greets when sustained engagement is detected; goodbye detection ends conversation gracefully
-  4. End-to-end latency from speech end to TTS start is under 1500ms
-  5. Dead code is removed, no redundant files remain, and unit + integration tests achieve 80%+ coverage
-**Plans**: TBD
+  1. PyTorch nightly with CUDA 12.8+ loads and reports sm_120 capability
+  2. Parakeet TDT ASR transcribes test audio on Blackwell with CUDA graphs disabled
+  3. All models (Dolphin, Kokoro, L2CS-Net, Parakeet, Silero VAD) load simultaneously
+  4. `nvidia-smi` confirms total VRAM under 12GB
+  5. Each model produces correct output on real GPU (not just mocked)
 
 Plans:
 - [ ] 07-01: TBD
 - [ ] 07-02: TBD
-- [ ] 07-03: TBD
+
+### Phase 8: Full Integration & Quality
+**Goal**: Complete conversation loop works end-to-end with production quality and test coverage
+**Location**: LAB
+**Depends on**: All previous phases
+**Requirements**: CONV-01, CONV-02, CONV-03, CONV-04, QUAL-02, QUAL-03, QUAL-04, QUAL-05
+**Success Criteria** (what must be TRUE):
+  1. Full conversation loop: engagement -> greeting -> speech -> separation -> ASR -> LLM -> TTS -> playback
+  2. Session state machine drives lifecycle (idle -> approaching -> engaged -> conversing -> disengaging)
+  3. Proactive greeting on sustained engagement; goodbye detection ends conversation
+  4. End-to-end latency speech end -> TTS start < 1500ms
+  5. Dead code removed, no redundant files, unit + integration tests at 80%+ coverage
+
+Plans:
+- [ ] 08-01: TBD
+- [ ] 08-02: TBD
+- [ ] 08-03: TBD
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
+- HOME: Phases 1 -> 2, 3 (parallel) -> 4 -> 5 -> 6 (code only)
+- LAB: Phase 6 (hardware test) -> 7 -> 8
 
-Note: Phase 2 (Android) can execute in parallel with Phases 3-4 (server-side models) since they are on different codebases.
+Phase 2 (TTS) and Phase 3 (Vision) can run in parallel since they're independent.
+Phase 6 (Android) code can be written alongside Phases 2-5, but hardware testing needs the lab.
 
-| Phase | Plans Complete | Status | Completed |
-|-------|----------------|--------|-----------|
-| 1. Environment & API Foundation | 0/3 | Not started | - |
-| 2. Android Audio Pipeline | 0/2 | Not started | - |
-| 3. TTS Pipeline | 0/2 | Not started | - |
-| 4. Vision Pipeline | 0/2 | Not started | - |
-| 5. Speaker Separation | 0/3 | Not started | - |
-| 6. Turn-Taking & Echo Cancellation | 0/2 | Not started | - |
-| 7. Full Integration & Quality | 0/3 | Not started | - |
+| Phase | Location | Plans Complete | Status | Completed |
+|-------|----------|----------------|--------|-----------|
+| 1. Dependency Setup & Stub API Fixes | HOME | 0/3 | Not started | - |
+| 2. TTS Pipeline Code | HOME | 0/2 | Not started | - |
+| 3. Vision Pipeline Code | HOME | 0/2 | Not started | - |
+| 4. Speaker Separation Code | HOME | 0/3 | Not started | - |
+| 5. Turn-Taking & AEC Code | HOME | 0/2 | Not started | - |
+| 6. Android Audio Pipeline | HOME+LAB | 0/2 | Not started | - |
+| 7. GPU Validation & Model Loading | LAB | 0/2 | Not started | - |
+| 8. Full Integration & Quality | LAB | 0/3 | Not started | - |
