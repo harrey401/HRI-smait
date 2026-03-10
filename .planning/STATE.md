@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 03-vision-pipeline-code plan 01 (03-01-PLAN.md)
-last_updated: "2026-03-10T07:55:45.820Z"
+stopped_at: Completed 03-vision-pipeline-code plan 02 (03-02-PLAN.md)
+last_updated: "2026-03-10T07:58:18.019Z"
 last_activity: 2026-03-09 -- Roadmap restructured for HOME/LAB split
 progress:
   total_phases: 8
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 7
-  completed_plans: 6
+  completed_plans: 7
   percent: 33
 ---
 
@@ -62,6 +62,7 @@ Progress: [███░░░░░░░] 33%
 | Phase 02-tts-pipeline-code P02 | 2m13s | 1 tasks | 2 files |
 | Phase 02-tts-pipeline-code P01 | 8m | 1 tasks | 2 files |
 | Phase 03-vision-pipeline-code P01 | 2min | 2 tasks | 3 files |
+| Phase 03-vision-pipeline-code P02 | 4min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -88,6 +89,8 @@ Recent decisions affecting current work:
 - [Phase 02-tts-pipeline-code]: hasattr(audio, 'cpu') duck-type guard avoids importing torch in tts.py
 - [Phase 03-vision-pipeline-code]: VisionConfig.lip_roi_size corrected to (88,88) — Dolphin requires exactly 88x88; 96x96 would produce wrong-shaped tensors
 - [Phase 03-vision-pipeline-code]: GazeEstimator L2CS tests went straight to GREEN — production code already handles empty yaw/pitch and RuntimeError
+- [Phase 03-vision-pipeline-code]: Walking-past test must prime area history with gaze=OFF first: filter requires >=3 entries before suppressing approach, gaze=ON at t=0 causes APPROACHING before history exists
+- [Phase 03-vision-pipeline-code]: Patch smait.perception.face_tracker.mp (module-level alias) not mediapipe.solutions.face_mesh — mediapipe.solutions is not installed in this environment
 
 ### Pending Todos
 
@@ -102,6 +105,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-10T07:55:45.818Z
-Stopped at: Completed 03-vision-pipeline-code plan 01 (03-01-PLAN.md)
+Last session: 2026-03-10T07:58:18.017Z
+Stopped at: Completed 03-vision-pipeline-code plan 02 (03-02-PLAN.md)
 Resume file: None
