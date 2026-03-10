@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: TTS Pipeline Code** - Rewrite Kokoro integration with correct KPipeline API (completed 2026-03-10)
 - [x] **Phase 3: Vision Pipeline Code** - Rewrite L2CS-Net gaze, lip extraction for Dolphin format (completed 2026-03-10)
 - [x] **Phase 4: Speaker Separation Code** - Rewrite Dolphin separator with correct API and tensor shapes (completed 2026-03-10)
-- [ ] **Phase 5: Turn-Taking & AEC Code** - VAD-based EOU, AEC research, barge-in logic
+- [x] **Phase 5: Turn-Taking & AEC Code** - VAD-based EOU, AEC research, barge-in logic (completed 2026-03-10)
 - [ ] **Phase 6: Android Audio Pipeline** - Merge CAE beamforming, 3 streams + DOA, AudioTrack playback
 
 ### LAB phases (RTX 5070 + robot required):
@@ -110,7 +110,7 @@ Plans:
   4. Barge-in logic written: detect user speech during TTS, stop TTS, resume listening
   5. Unit tests verify EOU timing, hallucination rejection, and barge-in state transitions
 
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] 05-01-PLAN.md — Rewrite EOUDetector with VAD-prob silence tracking, hallucination filter tests + NeMo confidence
@@ -180,7 +180,7 @@ Phase 6 (Android) code can be written alongside Phases 2-5, but hardware testing
 | 2. TTS Pipeline Code | 2/2 | Complete   | 2026-03-10 | - |
 | 3. Vision Pipeline Code | 2/2 | Complete   | 2026-03-10 | - |
 | 4. Speaker Separation Code | 2/2 | Complete   | 2026-03-10 | - |
-| 5. Turn-Taking & AEC Code | HOME | 0/2 | Not started | - |
+| 5. Turn-Taking & AEC Code | 2/2 | Complete   | 2026-03-10 | - |
 | 6. Android Audio Pipeline | HOME+LAB | 0/2 | Not started | - |
 | 7. GPU Validation & Model Loading | LAB | 0/2 | Not started | - |
 | 8. Full Integration & Quality | LAB | 0/3 | Not started | - |

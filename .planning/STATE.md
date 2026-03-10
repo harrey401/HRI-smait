@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 05-turn-taking-aec-code plan 01 (05-01-PLAN.md)
-last_updated: "2026-03-10T10:05:57.739Z"
+stopped_at: Completed 05-turn-taking-aec-code plan 02 (05-02-PLAN.md)
+last_updated: "2026-03-10T10:14:34.067Z"
 last_activity: 2026-03-09 -- Roadmap restructured for HOME/LAB split
 progress:
   total_phases: 8
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 11
-  completed_plans: 10
+  completed_plans: 11
   percent: 33
 ---
 
@@ -66,6 +66,7 @@ Progress: [███░░░░░░░] 33%
 | Phase 04-speaker-separation-code P01 | 2m42s | 2 tasks | 3 files |
 | Phase 04-speaker-separation-code P02 | 3m47s | 2 tasks | 3 files |
 | Phase 05-turn-taking-aec-code P01 | 4min | 2 tasks | 6 files |
+| Phase 05-turn-taking-aec-code P02 | 5m39s | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -102,6 +103,9 @@ Recent decisions affecting current work:
 - [Phase 05-turn-taking-aec-code]: Hallucination filter runs before short confidence check — recognised phrases must always carry hallucination_phrase label
 - [Phase 05-turn-taking-aec-code]: _extract_confidence handles both list[Hypothesis] and single Hypothesis objects from NeMo transcribe()
 - [Phase 05-turn-taking-aec-code]: hard_cutoff_ms default changed from 1500 to 1800 to match vad_silence_ms threshold
+- [Phase 05-turn-taking-aec-code]: BARGE_IN event placed in Turn-taking section after END_OF_TURN; _mic_gated replaced with _tts_playing to keep VAD active during TTS
+- [Phase 05-turn-taking-aec-code]: SoftwareAEC lazy-imports speexdsp inside __init__ — graceful degradation when libspeexdsp-dev not installed
+- [Phase 05-turn-taking-aec-code]: asyncio.current_task() stored in _tts_task at start of speak/speak_streaming; _on_barge_in() calls .cancel(); TTS_END always in finally
 
 ### Pending Todos
 
@@ -116,6 +120,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-10T10:05:57.737Z
-Stopped at: Completed 05-turn-taking-aec-code plan 01 (05-01-PLAN.md)
+Last session: 2026-03-10T10:14:26.022Z
+Stopped at: Completed 05-turn-taking-aec-code plan 02 (05-02-PLAN.md)
 Resume file: None

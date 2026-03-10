@@ -20,8 +20,8 @@ Requirements for this milestone. Each maps to roadmap phases.
 - [ ] **AUD-03**: Android app sends 3 streams: CAE audio (0x01), raw 4-channel audio (0x03), video (0x02)
 - [ ] **AUD-04**: Android app sends DOA angles from CAE callbacks as JSON messages
 - [x] **AUD-05**: Silero VAD segments speech from CAE audio with ring buffer alignment
-- [ ] **AUD-06**: Acoustic echo cancellation replaces mic gating (research CAE SDK AEC + software AEC, implement best approach)
-- [ ] **AUD-07**: Barge-in support — robot listens while speaking, user can interrupt mid-response
+- [x] **AUD-06**: Acoustic echo cancellation replaces mic gating (research CAE SDK AEC + software AEC, implement best approach)
+- [x] **AUD-07**: Barge-in support — robot listens while speaking, user can interrupt mid-response
 
 ### Speaker Separation
 
