@@ -12,12 +12,19 @@ from smait.perception.dolphin_separator import SeparationResult
 
 logger = logging.getLogger(__name__)
 
-# Known ASR hallucination phrases (Issue #6 mitigation)
+# Known ASR hallucination phrases (Issue #6 mitigation).
+# These are common artifacts in training data for YouTube-trained ASR models.
 HALLUCINATION_PHRASES = frozenset({
+    # Original set
     "yeah", "okay", "thank you", "bye", "thanks for watching",
     "thanks", "yes", "no", "hmm", "uh", "um", "oh",
     "thank you for watching", "please subscribe",
     "see you next time", "goodbye",
+    # Extended set (Phase 05-01)
+    "subscribers", "like and subscribe", "please like",
+    "don't forget to subscribe", "hit the bell",
+    "thanks for listening", "see you later",
+    "have a nice day", "you're welcome", "hello",
 })
 
 # Confidence threshold for hallucination filter
@@ -86,20 +93,25 @@ class Transcriber:
     def _check_filters(self, result: TranscriptResult) -> Optional[str]:
         """Apply confidence and hallucination filters.
 
+        Filter order:
+          1. Known hallucination phrases at low confidence (highest priority —
+             a recognised hallucination phrase must be labelled as such).
+          2. Short utterance + low confidence (general quality gate).
+
         Returns rejection reason string, or None if passes all filters.
         """
         text = result.text.strip()
         text_lower = text.lower().rstrip(".!?,")
         word_count = len(text.split())
 
-        # Short utterance + low confidence -> reject (Issue #6)
-        if word_count < 8 and result.confidence < self._config.confidence_threshold:
-            return f"low_confidence_short ({word_count} words, conf={result.confidence:.2f})"
-
-        # Known hallucination phrases at moderate-low confidence
+        # 1. Known hallucination phrases at moderate-low confidence
         if self._config.hallucination_filter:
             if text_lower in HALLUCINATION_PHRASES:
                 if result.confidence < HALLUCINATION_CONFIDENCE_THRESHOLD:
                     return f"hallucination_phrase ('{text_lower}', conf={result.confidence:.2f})"
+
+        # 2. Short utterance + low confidence -> reject (Issue #6)
+        if word_count < 8 and result.confidence < self._config.confidence_threshold:
+            return f"low_confidence_short ({word_count} words, conf={result.confidence:.2f})"
 
         return None

@@ -91,7 +91,7 @@ class ParakeetASR:
             # NeMo 2.0 transcribe API
             # Parakeet expects: list of numpy arrays or file paths
             # Returns: tuple of (texts, timestamps) for TDT models
-            result = self._model.transcribe([audio])
+            result = self._model.transcribe([audio], return_hypotheses=True)
 
             # Handle NeMo 2.0 tuple return (Issue: NeMo returns (text, timestamps))
             if isinstance(result, tuple):
@@ -107,8 +107,8 @@ class ParakeetASR:
             text = texts[0] if texts else ""
             timestamps = word_ts[0] if word_ts and len(word_ts) > 0 else []
 
-            # Compute confidence from logprobs if available
-            confidence = self._compute_confidence()
+            # Extract confidence from NeMo hypotheses (with fallback to 0.65)
+            confidence = self._extract_confidence(result)
 
             latency = (time.monotonic() - t0) * 1000
 
@@ -127,11 +127,54 @@ class ParakeetASR:
             logger.exception("ASR transcription failed")
             return None
 
-    def _compute_confidence(self) -> float:
-        """Compute confidence score from model's last inference.
+    def _extract_confidence(self, model_output) -> float:
+        """Extract utterance confidence from NeMo model output.
 
-        NeMo doesn't directly expose per-utterance confidence in all modes.
-        We use a heuristic based on available logprobs.
+        Attempts to read ``word_confidence`` from a NeMo ``Hypothesis`` object
+        (returned when ``return_hypotheses=True``).  Falls back to ``score``
+        if available, and ultimately returns 0.65 when neither is present.
+
+        Args:
+            model_output: Raw output from ``self._model.transcribe()``.
+                May be a tuple, list, or a single value.
+
+        Returns:
+            Confidence score in [0, 1].
+        """
+        try:
+            if isinstance(model_output, tuple):
+                hyps = model_output[0]
+            else:
+                hyps = model_output
+
+            # Unwrap list/sequence to get the first hypothesis object
+            if isinstance(hyps, (list, tuple)):
+                if not hyps:
+                    return 0.65
+                first = hyps[0]
+                # If it's a plain string, no hypothesis object available
+                if isinstance(first, str):
+                    return 0.65
+                hyp = first
+            else:
+                # model_output is itself a hypothesis object
+                hyp = hyps
+
+            word_confidence = getattr(hyp, "word_confidence", None)
+            if word_confidence is not None and len(word_confidence) > 0:
+                return float(min(word_confidence))
+            score = getattr(hyp, "score", None)
+            if score is not None:
+                return float(score)
+        except Exception:
+            pass
+
+        return 0.65
+
+    def _compute_confidence(self) -> float:
+        """Deprecated: use _extract_confidence() instead.
+
+        Kept for backward compatibility. Returns 0.65 fallback.
         """
         try:
             if hasattr(self._model, "last_logprobs"):
