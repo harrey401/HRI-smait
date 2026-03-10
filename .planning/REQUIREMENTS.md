@@ -50,7 +50,7 @@ Requirements for this milestone. Each maps to roadmap phases.
 - [x] **TTS-01**: Kokoro-82M TTS integrated with correct API (`KPipeline(lang_code='a')` generator)
 - [x] **TTS-02**: Sentence-level streaming TTS (yield per sentence, not per word)
 - [x] **TTS-03**: TTS audio sent as 0x05 binary frames to Android for AudioTrack playback
-- [ ] **TTS-04**: Android app plays TTS audio via AudioTrack on speaker
+- [x] **TTS-04**: Android app plays TTS audio via AudioTrack on speaker
 
 ### Conversation Loop
 
