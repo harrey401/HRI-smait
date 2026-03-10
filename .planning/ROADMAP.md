@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Dependency Setup & Stub API Fixes** - Vendor Dolphin, fix all stub APIs, install packages (completed 2026-03-10)
 - [x] **Phase 2: TTS Pipeline Code** - Rewrite Kokoro integration with correct KPipeline API (completed 2026-03-10)
 - [x] **Phase 3: Vision Pipeline Code** - Rewrite L2CS-Net gaze, lip extraction for Dolphin format (completed 2026-03-10)
-- [ ] **Phase 4: Speaker Separation Code** - Rewrite Dolphin separator with correct API and tensor shapes
+- [x] **Phase 4: Speaker Separation Code** - Rewrite Dolphin separator with correct API and tensor shapes (completed 2026-03-10)
 - [ ] **Phase 5: Turn-Taking & AEC Code** - VAD-based EOU, AEC research, barge-in logic
 - [ ] **Phase 6: Android Audio Pipeline** - Merge CAE beamforming, 3 streams + DOA, AudioTrack playback
 
@@ -92,7 +92,7 @@ Plans:
   5. Fallback to CAE passthrough when Dolphin unavailable
   6. Unit tests verify tensor shapes, sync logic, and fallback behavior with mocked Dolphin model
 
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] 04-01-PLAN.md — Fix DolphinSeparator passthrough on empty lip_frames, audio routing bug in main.py, inference_mode
@@ -177,7 +177,7 @@ Phase 6 (Android) code can be written alongside Phases 2-5, but hardware testing
 | 1. Dependency Setup & Stub API Fixes | 3/3 | Complete   | 2026-03-10 | - |
 | 2. TTS Pipeline Code | 2/2 | Complete   | 2026-03-10 | - |
 | 3. Vision Pipeline Code | 2/2 | Complete   | 2026-03-10 | - |
-| 4. Speaker Separation Code | 1/2 | In Progress|  | - |
+| 4. Speaker Separation Code | 2/2 | Complete   | 2026-03-10 | - |
 | 5. Turn-Taking & AEC Code | HOME | 0/2 | Not started | - |
 | 6. Android Audio Pipeline | HOME+LAB | 0/2 | Not started | - |
 | 7. GPU Validation & Model Loading | LAB | 0/2 | Not started | - |

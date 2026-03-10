@@ -19,7 +19,7 @@ Requirements for this milestone. Each maps to roadmap phases.
 - [ ] **AUD-02**: CAE 8-channel to 4-channel format mismatch resolved via hlw.ini config
 - [ ] **AUD-03**: Android app sends 3 streams: CAE audio (0x01), raw 4-channel audio (0x03), video (0x02)
 - [ ] **AUD-04**: Android app sends DOA angles from CAE callbacks as JSON messages
-- [ ] **AUD-05**: Silero VAD segments speech from CAE audio with ring buffer alignment
+- [x] **AUD-05**: Silero VAD segments speech from CAE audio with ring buffer alignment
 - [ ] **AUD-06**: Acoustic echo cancellation replaces mic gating (research CAE SDK AEC + software AEC, implement best approach)
 - [ ] **AUD-07**: Barge-in support — robot listens while speaking, user can interrupt mid-response
 
@@ -29,7 +29,7 @@ Requirements for this milestone. Each maps to roadmap phases.
 - [x] **SEP-02**: Audio input preprocessed to mono `[1, samples]` at 16kHz for Dolphin
 - [x] **SEP-03**: Lip frames preprocessed to 88x88 grayscale at 25fps for Dolphin
 - [x] **SEP-04**: Audio-visual temporal sync via server-side monotonic timestamps
-- [ ] **SEP-05**: DOA angles integrated into engagement detector for multi-speaker disambiguation
+- [x] **SEP-05**: DOA angles integrated into engagement detector for multi-speaker disambiguation
 - [x] **SEP-06**: Fallback to CAE passthrough audio when Dolphin is unavailable
 
 ### Speech Recognition

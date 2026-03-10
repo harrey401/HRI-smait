@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 04-speaker-separation-code plan 01 (04-01-PLAN.md)
-last_updated: "2026-03-10T08:28:33.932Z"
+stopped_at: Completed 04-speaker-separation-code plan 02 (04-02-PLAN.md)
+last_updated: "2026-03-10T08:29:55.671Z"
 last_activity: 2026-03-09 -- Roadmap restructured for HOME/LAB split
 progress:
   total_phases: 8
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 9
-  completed_plans: 8
+  completed_plans: 9
   percent: 33
 ---
 
@@ -64,6 +64,7 @@ Progress: [███░░░░░░░] 33%
 | Phase 03-vision-pipeline-code P01 | 2min | 2 tasks | 3 files |
 | Phase 03-vision-pipeline-code P02 | 4min | 2 tasks | 2 files |
 | Phase 04-speaker-separation-code P01 | 2m42s | 2 tasks | 3 files |
+| Phase 04-speaker-separation-code P02 | 3m47s | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -95,6 +96,8 @@ Recent decisions affecting current work:
 - [Phase 04-speaker-separation-code]: Early exit passthrough before _run_dolphin when lip_frames=[] prevents audio-only Dolphin TypeError crash
 - [Phase 04-speaker-separation-code]: torch.inference_mode() replaces torch.no_grad() in DolphinSeparator — faster, disables grad tracking entirely
 - [Phase 04-speaker-separation-code]: main.py always passes segment.cae_audio to Dolphin with channels=1 — raw 4-channel is wrong input for Dolphin mono model
+- [Phase 04-speaker-separation-code]: Test face areas equalized (10000 each) so DOA angular proximity is the discriminating factor — original plan face areas (15000 vs 8000) were mathematically insufficient for the formula to produce the expected winner
+- [Phase 04-speaker-separation-code]: DOA scoring: max(0.5, 1.0 - angular_distance/90.0) with frame_width=640, camera_fov_deg=60; flat 1.2x bonus removed
 
 ### Pending Todos
 
@@ -109,6 +112,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-10T08:28:33.930Z
-Stopped at: Completed 04-speaker-separation-code plan 01 (04-01-PLAN.md)
+Last session: 2026-03-10T08:29:55.669Z
+Stopped at: Completed 04-speaker-separation-code plan 02 (04-02-PLAN.md)
 Resume file: None
