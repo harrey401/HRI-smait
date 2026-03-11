@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SMAIT v3.0 — System Architecture</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { 
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: #ffffff;
+    padding: 40px;
+    color: #1a1a2e;
+  }
+  .title {
+    text-align: center;
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    letter-spacing: -0.5px;
+  }
+  .subtitle {
+    text-align: center;
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 30px;
+  }
+  .diagram {
+    display: flex;
+    gap: 24px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .column.robot { max-width: 260px; }
+  .column.pipeline { flex: 2; }
+  
+  .box {
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 16px;
+    background: #fafbfc;
+  }
+  .box-title {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid;
+  }
+  
+  /* Color coding */
+  .robot-box .box-title { color: #e74c3c; border-color: #e74c3c; }
+  .robot-box { border-color: #f5c6cb; }
+  
+  .audio-box .box-title { color: #2980b9; border-color: #2980b9; }
+  .audio-box { border-color: #b8d4e8; }
+  
+  .vision-box .box-title { color: #27ae60; border-color: #27ae60; }
+  .vision-box { border-color: #a9dfbf; }
+  
+  .fusion-box .box-title { color: #8e44ad; border-color: #8e44ad; }
+  .fusion-box { border-color: #d2b4de; }
+  
+  .output-box .box-title { color: #e67e22; border-color: #e67e22; }
+  .output-box { border-color: #f5cba7; }
+  
+  .item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    margin: 4px 0;
+    background: white;
+    border-radius: 8px;
+    font-size: 12.5px;
+    border: 1px solid #eee;
+  }
+  .item .icon { font-size: 16px; flex-shrink: 0; }
+  .item .label { font-weight: 600; }
+  .item .detail { color: #777; font-size: 11px; }
+  
+  .arrow-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 4px;
+    min-width: 60px;
+  }
+  .arrow-label {
+    font-size: 10px;
+    color: #999;
+    text-align: center;
+    line-height: 1.3;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .arrow-icon { font-size: 24px; color: #bbb; }
+  
+  .pipeline-row {
+    display: flex;
+    gap: 12px;
+  }
+  .pipeline-row > .box { flex: 1; }
+  
+  .flow-arrow {
+    text-align: center;
+    color: #ccc;
+    font-size: 20px;
+    padding: 2px 0;
+  }
+  
+  .highlight {
+    background: linear-gradient(135deg, #667eea11, #764ba211);
+    border-color: #667eea44;
+  }
+  .highlight .item {
+    background: #f8f7ff;
+  }
+  
+  .tag {
+    display: inline-block;
+    font-size: 9px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+    margin-left: 4px;
+    vertical-align: middle;
+  }
+  .tag-gpu { background: #e8f5e9; color: #2e7d32; }
+  .tag-new { background: #fff3e0; color: #e65100; }
+  .tag-hw { background: #fce4ec; color: #c62828; }
+  
+  .footer {
+    text-align: center;
+    margin-top: 24px;
+    font-size: 11px;
+    color: #aaa;
+  }
+  
+  /* Workflow section */
+  .workflow {
+    max-width: 1100px;
+    margin: 40px auto 0;
+  }
+  .workflow .title {
+    font-size: 18px;
+    margin-bottom: 20px;
+  }
+  .workflow-steps {
+    display: flex;
+    gap: 6px;
+    align-items: stretch;
+  }
+  .step {
+    flex: 1;
+    border-radius: 12px;
+    padding: 14px 12px;
+    text-align: center;
+    position: relative;
+    border: 2px solid;
+  }
+  .step-num {
+    font-size: 20px;
+    font-weight: 800;
+    opacity: 0.15;
+    position: absolute;
+    top: 6px;
+    right: 10px;
+  }
+  .step-icon { font-size: 24px; margin-bottom: 6px; }
+  .step-title { font-size: 12px; font-weight: 700; margin-bottom: 4px; }
+  .step-desc { font-size: 10.5px; color: #555; line-height: 1.4; }
+  .step-arrow { 
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; color: #ccc; min-width: 20px;
+  }
+  
+  .s1 { background: #fef2f2; border-color: #fca5a5; }
+  .s2 { background: #eff6ff; border-color: #93c5fd; }
+  .s3 { background: #f0fdf4; border-color: #86efac; }
+  .s4 { background: #faf5ff; border-color: #c4b5fd; }
+  .s5 { background: #fff7ed; border-color: #fdba74; }
+  .s6 { background: #fefce8; border-color: #fde047; }
+</style>
+</head>
+<body>
+
+<div class="title">SMAIT v3.0 — System Architecture</div>
+<div class="subtitle">Social Multimodal AI Interaction Technology · Cocktail Party HRI · San José State University</div>
+
+<div class="diagram">
+  <!-- Jackie Robot Column -->
+  <div class="column robot">
+    <div class="box robot-box">
+      <div class="box-title">🤖 Jackie Robot</div>
+      <div class="item">
+        <span class="icon">🎤</span>
+        <div><span class="label">4-Mic Array</span> <span class="tag tag-hw">HW</span><br><span class="detail">iFLYTEK CAE SDK · AEC · Beamforming · DOA</span></div>
+      </div>
+      <div class="item">
+        <span class="icon">📷</span>
+        <div><span class="label">RGB Camera</span><br><span class="detail">640×480 · Camera2 API · 30fps</span></div>
+      </div>
+      <div class="item">
+        <span class="icon">🔊</span>
+        <div><span class="label">Speaker</span><br><span class="detail">TTS playback · stereo</span></div>
+      </div>
+      <div class="item">
+        <span class="icon">📱</span>
+        <div><span class="label">RK3588 SoC</span><br><span class="detail">Android 12 · 6 TOPS NPU</span></div>
+      </div>
+    </div>
+    
+    <div class="box robot-box" style="text-align:center; padding: 10px;">
+      <div style="font-size:11px; font-weight:600; color:#e74c3c;">COMMUNICATION</div>
+      <div style="font-size:10px; color:#888; margin-top:4px;">
+        WebSocket (5GHz WiFi)<br>
+        Binary: audio/video frames<br>
+        JSON: control messages<br>
+        Fallback: ADB USB forward
+      </div>
+    </div>
+  </div>
+  
+  <!-- Arrow -->
+  <div class="arrow-section">
+    <div class="arrow-label">Audio<br>Video<br>DOA</div>
+    <div class="arrow-icon">⟶</div>
+    <div class="arrow-icon">⟵</div>
+    <div class="arrow-label">TTS<br>Commands</div>
+  </div>
+  
+  <!-- PC Pipeline Column -->
+  <div class="column pipeline">
+    <div class="pipeline-row">
+      <!-- Audio Pipeline -->
+      <div class="box audio-box">
+        <div class="box-title">🎵 Audio Pipeline</div>
+        <div class="item">
+          <span class="icon">🔇</span>
+          <div><span class="label">Silero VAD</span><br><span class="detail">Voice activity detection · 0.5 threshold</span></div>
+        </div>
+        <div class="item">
+          <span class="icon">🎙️</span>
+          <div><span class="label">Raw 4-Ch Capture</span><br><span class="detail">Multi-channel for spatial features</span></div>
+        </div>
+      </div>
+      
+      <!-- Vision Pipeline -->
+      <div class="box vision-box">
+        <div class="box-title">👁️ Vision Pipeline</div>
+        <div class="item">
+          <span class="icon">👤</span>
+          <div><span class="label">Face Tracking</span><br><span class="detail">MediaPipe · DeepSORT · multi-face</span></div>
+        </div>
+        <div class="item">
+          <span class="icon">👁️</span>
+          <div><span class="label">Gaze Estimation</span><br><span class="detail">L2CS-Net · attention detection</span></div>
+        </div>
+        <div class="item">
+          <span class="icon">👄</span>
+          <div><span class="label">Lip ROI Extraction</span><br><span class="detail">Mouth crop for AV-TSE input</span></div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="flow-arrow">▼</div>
+    
+    <!-- Dolphin - Highlighted -->
+    <div class="box fusion-box highlight">
+      <div class="box-title">🐬 Audio-Visual Fusion <span class="tag tag-new">NEW IN V3</span></div>
+      <div class="item">
+        <span class="icon">🐬</span>
+        <div><span class="label">Dolphin AV-TSE</span> <span class="tag tag-gpu">GPU</span><br><span class="detail">Target Speaker Extraction · lip video + multi-channel audio → clean speech</span></div>
+      </div>
+      <div class="item">
+        <span class="icon">🗣️</span>
+        <div><span class="label">Active Speaker Detection</span><br><span class="detail">LASER ASD · temporal buffer · AV sync</span></div>
+      </div>
+      <div class="item">
+        <span class="icon">📐</span>
+        <div><span class="label">DOA Integration</span> <span class="tag tag-hw">HW</span><br><span class="detail">Direction of Arrival · spatial speaker localization</span></div>
+      </div>
+    </div>
+    
+    <div class="flow-arrow">▼</div>
+    
+    <div class="pipeline-row">
+      <!-- ASR + Dialogue -->
+      <div class="box audio-box">
+        <div class="box-title">🗣️ Understanding</div>
+        <div class="item">
+          <span class="icon">📝</span>
+          <div><span class="label">Parakeet TDT 0.6B</span> <span class="tag tag-gpu">GPU</span><br><span class="detail">NVIDIA NeMo ASR · sub-100ms</span></div>
+        </div>
+        <div class="item">
+          <span class="icon">🔄</span>
+          <div><span class="label">End-of-Utterance</span><br><span class="detail">Semantic VAD · turn prediction</span></div>
+        </div>
+        <div class="item">
+          <span class="icon">🧠</span>
+          <div><span class="label">LLM Dialogue</span><br><span class="detail">Local (Phi-4 Mini) + API fallback</span></div>
+        </div>
+      </div>
+      
+      <!-- Output -->
+      <div class="box output-box">
+        <div class="box-title">🔊 Output</div>
+        <div class="item">
+          <span class="icon">🎵</span>
+          <div><span class="label">Kokoro TTS</span> <span class="tag tag-gpu">GPU</span> <span class="tag tag-new">NEW</span><br><span class="detail">82M param · natural speech · ~70ms</span></div>
+        </div>
+        <div class="item">
+          <span class="icon">🌳</span>
+          <div><span class="label">Behavior Tree</span><br><span class="detail">py_trees · 30Hz tick · session lifecycle</span></div>
+        </div>
+        <div class="item">
+          <span class="icon">📊</span>
+          <div><span class="label">Data Logging</span><br><span class="detail">ASR confidence · ASD score · DOA · latency</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Workflow -->
+<div class="workflow">
+  <div class="title">Interaction Workflow</div>
+  <div class="workflow-steps">
+    <div class="step s1">
+      <div class="step-num">1</div>
+      <div class="step-icon">🚶</div>
+      <div class="step-title">Approach</div>
+      <div class="step-desc">Person approaches robot. Face detected + gaze tracked. Engagement triggered (no wake word).</div>
+    </div>
+    <div class="step-arrow">→</div>
+    <div class="step s2">
+      <div class="step-num">2</div>
+      <div class="step-icon">🎤</div>
+      <div class="step-title">Capture</div>
+      <div class="step-desc">4-mic raw audio + CAE-processed audio + camera video streamed to PC simultaneously.</div>
+    </div>
+    <div class="step-arrow">→</div>
+    <div class="step s3">
+      <div class="step-num">3</div>
+      <div class="step-icon">🐬</div>
+      <div class="step-title">Separate</div>
+      <div class="step-desc">Dolphin AV-TSE uses lip video + spatial audio to extract target speaker from crowd noise.</div>
+    </div>
+    <div class="step-arrow">→</div>
+    <div class="step s4">
+      <div class="step-num">4</div>
+      <div class="step-icon">📝</div>
+      <div class="step-title">Understand</div>
+      <div class="step-desc">Clean speech → Parakeet ASR → transcript. LLM generates contextual response.</div>
+    </div>
+    <div class="step-arrow">→</div>
+    <div class="step s5">
+      <div class="step-num">5</div>
+      <div class="step-icon">🗣️</div>
+      <div class="step-title">Respond</div>
+      <div class="step-desc">Kokoro TTS synthesizes natural speech. Audio sent to Jackie for playback.</div>
+    </div>
+    <div class="step-arrow">→</div>
+    <div class="step s6">
+      <div class="step-num">6</div>
+      <div class="step-icon">🔄</div>
+      <div class="step-title">Loop</div>
+      <div class="step-desc">Multi-turn dialogue with session memory. Graceful exit on farewell or timeout.</div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">SMAIT — Social Multimodal AI Interaction Technology · Masters Project · SJSU BioRob Lab · 2026</div>
+
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: #fff;
+    padding: 30px;
+    color: #000;
+  }
+  svg { display: block; margin: 0 auto; }
+</style>
+</head>
+<body>
+<svg width="960" height="620" viewBox="0 0 960 620" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="a" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#000"/>
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="480" y="30" text-anchor="middle" font-size="18" font-weight="700">SMAIT v2.0 — System Architecture</text>
+
+  <!-- ========== JACKIE ========== -->
+  <rect x="30" y="60" width="180" height="250" rx="4" fill="none" stroke="#000" stroke-width="2"/>
+  <text x="120" y="82" text-anchor="middle" font-size="13" font-weight="700">Jackie Robot</text>
+
+  <rect x="45" y="100" width="150" height="36" rx="3" fill="none" stroke="#000" stroke-width="1.5"/>
+  <text x="120" y="122" text-anchor="middle" font-size="11">4-Mic Array + CAE</text>
+
+  <rect x="45" y="148" width="150" height="36" rx="3" fill="none" stroke="#000" stroke-width="1.5"/>
+  <text x="120" y="170" text-anchor="middle" font-size="11">Camera</text>
+
+  <rect x="45" y="196" width="150" height="36" rx="3" fill="none" stroke="#000" stroke-width="1.5"/>
+  <text x="120" y="218" text-anchor="middle" font-size="11">Speaker</text>
+
+  <rect x="45" y="244" width="150" height="36" rx="3" fill="none" stroke="#000" stroke-width="1.5"/>
+  <text x="120" y="260" text-anchor="middle" font-size="10">DOA · AEC</text>
+  <text x="120" y="273" text-anchor="middle" font-size="10">Beamforming</text>
+
+  <!-- ========== WEBSOCKET ========== -->
+  <line x1="210" y1="118" x2="290" y2="118" stroke="#000" stroke-width="1.5" marker-end="url(#a)"/>
+  <text x="250" y="111" text-anchor="middle" font-size="9">Audio</text>
+
+  <line x1="210" y1="166" x2="290" y2="166" stroke="#000" stroke-width="1.5" marker-end="url(#a)"/>
+  <text x="250" y="159" text-anchor="middle" font-size="9">Video</text>
+
+  <line x1="290" y1="214" x2="210" y2="214" stroke="#000" stroke-width="1.5" marker-end="url(#a)"/>
+  <text x="250" y="207" text-anchor="middle" font-size="9">TTS Audio</text>
+
+  <text x="250" y="243" text-anchor="middle" font-size="10" font-weight="600">WebSocket</text>
+  <text x="250" y="256" text-anchor="middle" font-size="9" fill="#555">5GHz WiFi</text>
+
+  <!-- ========== PC ========== -->
+  <rect x="290" y="60" width="640" height="430" rx="4" fill="none" stroke="#000" stroke-width="2"/>
+  <text x="610" y="82" text-anchor="middle" font-size="13" font-weight="700">Edge Server (PC + GPU)</text>
+
+  <!-- AUDIO PATH -->
+  <text x="310" y="115" font-size="10" font-weight="700">Audio Path</text>
+
+  <rect x="310" y="124" width="130" height="40" rx="3" fill="none" stroke="#000" stroke-width="1.5"/>
+  <text x="375" y="140" text-anchor="middle" font-size="10">Silero VAD</text>
+  <text x="375" y="153" text-anchor="middle" font-size="8" fill="#555">Voice Activity Det.</text>
+
+  <line x1="440" y1="144" x2="470" y2="144" stroke="#000" stroke-width="1.5" marker-end="url(#a)"/>
+
+  <rect x="470" y="124" width="150" height="40" rx="3" fill="none" stroke="#000" stroke-width="1.5"/>
+  <text x="545" y="140" text-anchor="middle" font-size="10">Parakeet TDT 0.6B</text>
+  <text x="545" y="153" text-anchor="middle" font-size="8" fill="#555">NVIDIA NeMo ASR</text>
+
+  <line x1="620" y1="144" x2="650" y2="144" stroke="#000" stroke-width="1.5" marker-end="url(#a)"/>
+
+  <rect x="650" y="124" width="130" height="40" rx="3" fill="none" stroke="#000" stroke-width="1.5"/>
+  <text x="715" y="140" text-anchor="middle" font-size="10">Confidence Gate</text>
+  <text x="715" y="153" text-anchor="middle" font-size="8" fill="#555">Threshold: 0.40</text>
+
+  <!-- Arrow down from confidence gate to RIGHT of speaker verifier -->
+  <line x1="780" y1="144" x2="830" y2="144" stroke="#000" stroke-width="1.5"/>
+  <line x1="830" y1="144" x2="830" y2="300" stroke="#000" stroke-width="1.5" marker-end="url(#a)"/>
+  <text x="845" y="220" font-size="8" fill="#555">pass</text>
+
+  <!-- VISION PATH -->
+  <text x="310" y="205" font-size="10" font-weight="700">Vision Path</text>
+
+  <rect x="310" y="214" width="130" height="40" rx="3" fill="none" stroke="#000" stroke-width="1.5"/>
+  <text x="375" y="230" text-anchor="middle" font-size="10">Face Tracking</text>
+  <text x="375" y="243" text-anchor="middle" font-size="8" fill="#555">MediaPipe + DeepSORT</text>
+
+  <line x1="440" y1="234" x2="470" y2="234" stroke="#000" stroke-width="1.5" marker-end="url(#a)"/>
+
+  <rect x="470" y="214" width="150" height="40" rx="3" fill="none" stroke="#000" stroke-width="1.5"/>
+  <text x="545" y="230" text-anchor="middle" font-size="10">Active Speaker Det.</text>
+  <text x="545" y="243" text-anchor="middle" font-size="8" fill="#555">LASER ASD</text>
+
+  <line x1="620" y1="234" x2="650" y2="234" stroke="#000" stroke-width="1.5" marker-end="url(#a)"/>
+
+  <rect x="650" y="214" width="130" height="40" rx="3" fill="none" stroke="#000" stroke-width="1.5"/>
+  <text x="715" y="230" text-anchor="middle" font-size="10">Speaker Verifier</text>
+  <text x="715" y="243" text-anchor="middle" font-size="8" fill="#555">Accept / Reject</text>
+
+  <!-- Arrow down from speaker verifier -->
+  <line x1="715" y1="254" x2="715" y2="300" stroke="#000" stroke-width="1.5" marker-end="url(#a)"/>
+
+  <!-- SEMANTIC VAD -->
+  <rect x="610" y="300" width="260" height="40" rx="3" fill="none" stroke="#000" stroke-width="1.5"/>
+  <text x="740" y="316" text-anchor="middle" font-size="10">Semantic VAD</text>
+  <text x="740" y="329" text-anchor="middle" font-size="8" fill="#555">Turn-taking · End-of-Utterance</text>
+
+  <!-- Arrow to LLM -->
+  <line x1="610" y1="320" x2="560" y2="320" stroke="#000" stroke-width="1.5" marker-end="url(#a)"/>
+
+  <!-- LLM -->
+  <rect x="390" y="300" width="170" height="40" rx="3" fill="none" stroke="#000" stroke-width="1.5"/>
+  <text x="475" y="316" text-anchor="middle" font-size="10">LLM (GPT-4o-mini)</text>
+  <text x="475" y="329" text-anchor="middle" font-size="8" fill="#555">Multi-turn · 10-turn memory</text>
+
+  <!-- Arrow down to TTS -->
+  <line x1="475" y1="340" x2="475" y2="370" stroke="#000" stroke-width="1.5" marker-end="url(#a)"/>
+
+  <!-- TTS -->
+  <rect x="390" y="370" width="170" height="40" rx="3" fill="none" stroke="#000" stroke-width="1.5"/>
+  <text x="475" y="386" text-anchor="middle" font-size="10">Piper TTS</text>
+  <text x="475" y="399" text-anchor="middle" font-size="8" fill="#555">Local · EdgeTTS fallback</text>
+
+  <!-- Arrow: TTS back out to Jackie -->
+  <line x1="390" y1="390" x2="310" y2="390" stroke="#000" stroke-width="1.5"/>
+  <line x1="310" y1="390" x2="310" y2="440" stroke="#000" stroke-width="1.5"/>
+  <line x1="310" y1="440" x2="295" y2="440" stroke="#000" stroke-width="1.5" marker-end="url(#a)"/>
+
+  <!-- BEHAVIOR TREE -->
+  <rect x="310" y="450" width="130" height="30" rx="3" fill="none" stroke="#000" stroke-width="1.5"/>
+  <text x="375" y="470" text-anchor="middle" font-size="10">Behavior Tree</text>
+
+  <!-- SESSION LIFECYCLE -->
+  <text x="470" y="465" font-size="10" font-weight="700">Session Lifecycle:</text>
+
+  <rect x="470" y="473" width="60" height="24" rx="3" fill="none" stroke="#000" stroke-width="1"/>
+  <text x="500" y="489" text-anchor="middle" font-size="9">Idle</text>
+
+  <line x1="530" y1="485" x2="545" y2="485" stroke="#000" stroke-width="1" marker-end="url(#a)"/>
+
+  <rect x="545" y="473" width="75" height="24" rx="3" fill="none" stroke="#000" stroke-width="1"/>
+  <text x="582" y="489" text-anchor="middle" font-size="9">Approach</text>
+
+  <line x1="620" y1="485" x2="635" y2="485" stroke="#000" stroke-width="1" marker-end="url(#a)"/>
+
+  <rect x="635" y="473" width="75" height="24" rx="3" fill="none" stroke="#000" stroke-width="1"/>
+  <text x="672" y="489" text-anchor="middle" font-size="9">Engaged</text>
+
+  <line x1="710" y1="485" x2="725" y2="485" stroke="#000" stroke-width="1" marker-end="url(#a)"/>
+
+  <rect x="725" y="473" width="85" height="24" rx="3" fill="none" stroke="#000" stroke-width="1"/>
+  <text x="767" y="489" text-anchor="middle" font-size="9">Conversation</text>
+
+  <line x1="810" y1="485" x2="825" y2="485" stroke="#000" stroke-width="1" marker-end="url(#a)"/>
+
+  <rect x="825" y="473" width="50" height="24" rx="3" fill="none" stroke="#000" stroke-width="1"/>
+  <text x="850" y="489" text-anchor="middle" font-size="9">End</text>
+
+  <!-- Loop back -->
+  <path d="M850,497 L850,508 L500,508 L500,497" fill="none" stroke="#000" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#a)"/>
+  <text x="675" y="518" text-anchor="middle" font-size="8" fill="#555">timeout / farewell / re-engagement</text>
+
+</svg>
+</body>
+</html>
