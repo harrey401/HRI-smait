@@ -20,5 +20,17 @@ docs/jackie-spec-sheet.pdf
 docs/*hardware*
 docs/*spec-sheet*
 
+# Planning & docs (personal, not needed to run)
+.planning/
+docs/
+*.md
+!README.md
+DEMO_FLOW.md
+INTERVIEW_GUIDE.md
+LAB_PLAN.md
+REBUILD_PROMPT.md
+REBUILD_PROMPT_FINAL.md
+isaac_sim_tests/README.md
+
 # Claude Code
 CLAUDE.md
