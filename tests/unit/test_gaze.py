@@ -16,6 +16,12 @@ from smait.core.config import Config
 from smait.core.events import EventBus
 from smait.perception.gaze import GazeEstimator, GazeResult
 
+try:
+    import l2cs  # noqa: F401
+    _has_l2cs = True
+except ImportError:
+    _has_l2cs = False
+
 
 @dataclass
 class _FakeTrack:
@@ -75,6 +81,7 @@ def test_head_pose_not_looking_at_robot(gaze_estimator):
     assert result.is_looking_at_robot is False
 
 
+@pytest.mark.skipif(not _has_l2cs, reason="l2cs not installed")
 def test_correct_arch_param(config, event_bus):
     """QUAL-01: init_model() must pass arch='ResNet50', not arch='Gaze360'."""
     mock_pipeline_cls = MagicMock()

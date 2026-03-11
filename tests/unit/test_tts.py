@@ -15,6 +15,12 @@ from smait.core.config import Config
 from smait.core.events import EventBus
 from smait.output.tts import TTSEngine
 
+try:
+    import kokoro  # noqa: F401
+    _has_kokoro = True
+except ImportError:
+    _has_kokoro = False
+
 
 @pytest.fixture
 def tts_engine(config, event_bus):
@@ -34,6 +40,7 @@ def test_available_flag_starts_false(tts_engine):
     assert tts_engine.available is False
 
 
+@pytest.mark.skipif(not _has_kokoro, reason="kokoro not installed")
 def test_correct_class_imported(config, event_bus):
     """QUAL-01: init_model() must instantiate KPipeline(lang_code='a'), not KokoroTTS."""
     mock_pipeline_cls = MagicMock()
@@ -48,6 +55,7 @@ def test_correct_class_imported(config, event_bus):
     assert engine.available is True
 
 
+@pytest.mark.skipif(not _has_kokoro, reason="kokoro not installed")
 def test_synthesize_uses_generator(config, event_bus):
     """QUAL-01: synthesize() must consume KPipeline generator and concatenate audio chunks."""
     audio_chunk = np.array([0.1, 0.2, 0.3], dtype=np.float32)
@@ -68,6 +76,7 @@ def test_synthesize_uses_generator(config, event_bus):
     assert len(result) > 0, "Expected non-empty audio bytes"
 
 
+@pytest.mark.skipif(not _has_kokoro, reason="kokoro not installed")
 def test_voice_from_config(config, event_bus):
     """Pipeline called with voice from config (default 'af_heart')."""
     audio_chunk = np.array([0.5], dtype=np.float32)
