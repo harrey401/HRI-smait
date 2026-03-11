@@ -157,8 +157,15 @@ class ConnectionManager:
                 "beam": msg.get("beam", 0),
             })
         elif msg_type == "tts_state":
-            # Jackie reporting its local TTS state (if using Android TTS fallback)
-            pass
+            # Jackie reporting its local Android TTS state (fallback path).
+            # Gate the mic so the server doesn't transcribe Jackie's own voice.
+            speaking = msg.get("speaking", False)
+            if speaking:
+                self._event_bus.emit(EventType.TTS_START)
+                logger.info("Android TTS started (fallback) — mic gated")
+            else:
+                self._event_bus.emit(EventType.TTS_END)
+                logger.info("Android TTS ended (fallback) — mic ungated")
         elif msg_type == "config":
             logger.info("Received config update from Jackie: %s", msg)
         elif msg_type == "cae_status":
