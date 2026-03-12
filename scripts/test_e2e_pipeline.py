@@ -22,6 +22,7 @@ import time
 import numpy as np
 
 os.environ["NEMO_DISABLE_CUDA_GRAPHS"] = "1"
+os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 
 
 def check(name: str, condition: bool, detail: str = "") -> bool:
@@ -90,6 +91,9 @@ async def main() -> int:
         import nemo.collections.asr as nemo_asr
         parakeet = nemo_asr.models.ASRModel.from_pretrained("nvidia/parakeet-tdt-0.6b-v2")
         parakeet.eval()
+        # Disable CUDA graphs for Blackwell (sm_120) compatibility
+        if hasattr(parakeet, 'decoding') and hasattr(parakeet.decoding, 'decoding'):
+            parakeet.decoding.decoding.use_cuda_graph_decoder = False
         print("  Parakeet loaded")
     except Exception as e:
         print(f"  Parakeet skipped: {e}")
@@ -163,7 +167,7 @@ async def main() -> int:
     if parakeet is not None:
         print("\nStep 4: Parakeet ASR transcription...")
         t0 = time.time()
-        result = parakeet.transcribe([separated], return_hypotheses=True)
+        result = parakeet.transcribe([separated], return_hypotheses=False)
         asr_time = (time.time() - t0) * 1000
 
         if isinstance(result, tuple):
@@ -243,7 +247,7 @@ async def main() -> int:
 
     if parakeet is not None:
         t0 = time.time()
-        parakeet.transcribe([sep_audio], return_hypotheses=True)
+        parakeet.transcribe([sep_audio], return_hypotheses=False)
         asr_ms = (time.time() - t0) * 1000
         total_pipeline_ms += asr_ms
     else:
