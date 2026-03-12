@@ -91,10 +91,14 @@ async def main() -> int:
         import nemo.collections.asr as nemo_asr
         parakeet = nemo_asr.models.ASRModel.from_pretrained("nvidia/parakeet-tdt-0.6b-v2")
         parakeet.eval()
-        # Disable CUDA graphs for Blackwell (sm_120) compatibility
-        if hasattr(parakeet, 'decoding') and hasattr(parakeet.decoding, 'decoding'):
-            parakeet.decoding.decoding.use_cuda_graph_decoder = False
-        print("  Parakeet loaded")
+        # Disable CUDA graphs for Blackwell (sm_120) — force greedy decoding without graphs
+        from omegaconf import OmegaConf
+        decoding_cfg = OmegaConf.create({
+            "strategy": "greedy",
+            "greedy": {"max_symbols": 10, "preserve_alignments": False, "confidence_cfg": {"preserve_frame_confidence": False}},
+        })
+        parakeet.change_decoding_strategy(decoding_cfg)
+        print("  Parakeet loaded (greedy, no CUDA graphs)")
     except Exception as e:
         print(f"  Parakeet skipped: {e}")
 
