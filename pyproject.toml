@@ -75,7 +75,7 @@ Issues = "https://github.com/yourusername/smait-hri/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["smait*"]
+include = ["smait*", "look2hear*"]
 
 [tool.setuptools.package-data]
 smait = ["*.yaml", "*.json"]

@@ -111,7 +111,7 @@ async def main() -> int:
     audio = load_test_audio()
     audio_int16 = (audio * 32767).clip(-32768, 32767).astype(np.int16)
 
-    chunk_size = 480  # 30ms at 16kHz
+    chunk_size = 512  # 32ms at 16kHz (Silero required size)
     speech_chunks = 0
     total_chunks = 0
     vad_model.reset_states()
