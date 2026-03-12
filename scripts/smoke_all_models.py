@@ -52,7 +52,7 @@ def main() -> int:
     results = []
     vram_log = []
 
-    total_vram = torch.cuda.get_device_properties(0).total_mem / (1024**2)
+    total_vram = torch.cuda.get_device_properties(0).total_memory / (1024**2)
     print(f"GPU: {torch.cuda.get_device_name(0)}")
     print(f"Total VRAM: {total_vram:.0f} MB")
     print(f"{'=' * 60}\n")
