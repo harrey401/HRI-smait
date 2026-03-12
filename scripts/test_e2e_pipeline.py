@@ -279,7 +279,7 @@ async def main() -> int:
     # --- Step 7: VRAM after full pipeline ---
     final_vram = torch.cuda.memory_allocated() / (1024**2)
     peak_vram = torch.cuda.max_memory_allocated() / (1024**2)
-    total_gpu = torch.cuda.get_device_properties(0).total_mem / (1024**2)
+    total_gpu = torch.cuda.get_device_properties(0).total_memory / (1024**2)
 
     results.append(check(
         "Final VRAM",
