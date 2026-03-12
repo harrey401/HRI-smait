@@ -136,7 +136,7 @@ async def main() -> int:
         print("\nStep 3: Dolphin separation...")
         # Simulate lip frames (25 frames of 88x88 grayscale)
         n_frames = 25
-        video_tensor = torch.randn(1, 1, n_frames, 88, 88, 1, device="cuda")
+        video_tensor = torch.randn(1, 1, n_frames, 88, 88, device="cuda")
         audio_tensor = torch.from_numpy(audio).unsqueeze(0).to("cuda")
 
         t0 = time.time()
@@ -225,7 +225,7 @@ async def main() -> int:
         # Re-run separation with timing
         audio_tensor = torch.from_numpy(audio[:16000]).unsqueeze(0).to("cuda")  # 1s segment
         n_frames = 12
-        video_tensor = torch.randn(1, 1, n_frames, 88, 88, 1, device="cuda")
+        video_tensor = torch.randn(1, 1, n_frames, 88, 88, device="cuda")
 
         t0 = time.time()
         with torch.inference_mode():

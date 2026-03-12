@@ -50,7 +50,7 @@ class DolphinSeparator:
     - separation_confidence: SNR improvement estimate
 
     Audio tensor: [1, samples] mono float32 at 16kHz.
-    Video tensor: [1, 1, T, 88, 88, 1] grayscale lip crops (batch, group, frames, H, W, C).
+    Video tensor: [1, 1, T, 88, 88] grayscale lip crops (batch, group, frames, H, W, C).
 
     Fallback: If no raw 4-channel audio available, Dolphin works with
     single-channel audio + visual features.
@@ -132,7 +132,7 @@ class DolphinSeparator:
         """Run the Dolphin model.
 
         Audio tensor: [1, samples] mono float32 at 16kHz.
-        Video tensor: [1, 1, T, 88, 88, 1] grayscale lip crops.
+        Video tensor: [1, 1, T, 88, 88] grayscale lip crops.
         """
         # Prepare audio tensor — Dolphin always takes mono [1, samples]
         audio_float = audio.astype(np.float32) / 32768.0
@@ -164,9 +164,7 @@ class DolphinSeparator:
 
         # Stack frames: [T, 88, 88]
         lip_stack = np.stack(grayscale_frames, axis=0)
-        # Add channel dim: [T, 88, 88, 1]
-        lip_stack = lip_stack[..., np.newaxis]
-        # Add batch and group dims: [1, 1, T, 88, 88, 1]
+        # Add batch and channel dims: [1, 1, T, 88, 88] — model expects [B, C, T, H, W]
         video_tensor = torch.from_numpy(
             lip_stack[np.newaxis, np.newaxis]
         ).float().to(self._device)
