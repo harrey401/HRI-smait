@@ -75,7 +75,7 @@ def main() -> int:
         results.append(check("Tensor ops on GPU", False, str(e)))
 
     # 6. VRAM
-    total = torch.cuda.get_device_properties(0).total_mem / (1024**3)
+    total = torch.cuda.get_device_properties(0).total_memory / (1024**3)
     free = (total - torch.cuda.memory_allocated(0) / (1024**3))
     results.append(check(
         "VRAM",

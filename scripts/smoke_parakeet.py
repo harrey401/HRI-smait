@@ -114,12 +114,12 @@ def main() -> int:
     audio = load_test_audio()
     t0 = time.time()
     try:
-        result = model.transcribe([audio], return_hypotheses=True)
+        result = model.transcribe([audio])
         latency = (time.time() - t0) * 1000
 
-        # Parse result
+        # Parse result — NeMo returns various formats depending on version
         if isinstance(result, tuple):
-            texts = result[0]
+            texts = result[0] if isinstance(result[0], list) else [result[0]]
         elif isinstance(result, list):
             texts = result
         else:
