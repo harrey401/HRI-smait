@@ -104,7 +104,7 @@ fi
 # ---- Step 3: Kokoro TTS ----
 step "Step 3: Kokoro TTS"
 
-pip install "kokoro>=0.9.4" soundfile
+pip install kokoro-tts soundfile 2>/dev/null || pip install git+https://github.com/hexgrad/kokoro.git soundfile 2>/dev/null || warn "Kokoro pip install failed, checking if already installed..."
 
 # espeak-ng is needed for phonemization
 if ! command -v espeak-ng &>/dev/null; then
