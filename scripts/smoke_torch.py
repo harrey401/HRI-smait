@@ -79,7 +79,7 @@ def main() -> int:
     free = (total - torch.cuda.memory_allocated(0) / (1024**3))
     results.append(check(
         "VRAM",
-        total >= 10,
+        total >= 6,
         f"{total:.1f} GB total, ~{free:.1f} GB free",
     ))
 

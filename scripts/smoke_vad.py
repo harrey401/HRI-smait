@@ -44,7 +44,7 @@ def main() -> int:
         return 1
 
     # 2. Test on silence (should be low probability)
-    silence = torch.zeros(16000)  # 1s at 16kHz
+    silence = torch.zeros(512)  # 32ms chunk at 16kHz (Silero required size)
     prob = model(silence, 16000).item()
     results.append(check(
         "Silence detection",
