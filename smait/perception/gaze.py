@@ -66,6 +66,12 @@ class GazeEstimator:
                 "Install from: pip install git+https://github.com/edavalosanaya/L2CS-Net.git@main"
             )
             self._l2cs_pipeline = None
+        except Exception as exc:
+            logger.warning(
+                "L2CS-Net failed to load (weights download issue?): %s. "
+                "Using head pose fallback.", exc
+            )
+            self._l2cs_pipeline = None
 
     def estimate(
         self,
