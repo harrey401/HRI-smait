@@ -1,4 +1,4 @@
-# SMAIT HRI v2.0 — Smart Multimodal AI Interaction for Telepresence
+# SMAIT HRI v3.0 — Smart Multimodal AI Interaction for Telepresence
 
 A real-time Human-Robot Interaction framework that enables natural, face-to-face conversations between humans and service robots. Built for the **Jackie** robot platform at **San José State University, BioRob Lab**.
 
@@ -8,18 +8,20 @@ A real-time Human-Robot Interaction framework that enables natural, face-to-face
 
 ## Features
 
-- **Sub-100ms ASR** — NVIDIA Parakeet TDT (fp16 CUDA) or Faster-Whisper fallback
-- **Active Speaker Detection** — LASER-based visual speech verification with temporal buffering
-- **Face Tracking** — MediaPipe multi-face tracking with head pose estimation
-- **Engagement Detection** — Proximity + attention + natural engagement (no wake word needed)
-- **Proactive Greeting** — Robot initiates conversation when someone approaches
+- **Audio Processing** — 16kHz VAD (Silero), speech separation (Dolphin AV-TSE), AEC with 24kHz→16kHz resample
+- **Sub-100ms ASR** — NVIDIA Parakeet TDT (fp16 CUDA) with CUDA graphs + greedy decoding, or Faster-Whisper fallback
+- **Multi-speaker Handling** — Dolphin separates target speaker from background on GPU, supports 4-channel multichannel audio from Jackie
+- **Face Tracking** — MediaPipe multi-face tracking + head pose estimation
+- **Gaze Estimation** — L2CS-Net for eye contact detection
+- **Engagement Detection** — Proximity + attention + DOA-visual fusion (optional, disabled by default)
+- **Proactive Greeting** — Robot initiates conversation when someone approaches and maintains eye contact
 - **Behavior Trees** — py_trees-based composable robot behaviors
-- **Semantic VAD** — Early turn prediction for lower response latency
 - **Multi-turn Dialogue** — Sliding window conversation memory with LLM backends (OpenAI, Ollama)
-- **Local TTS** — Piper TTS (~70ms synthesis latency)
-- **Directional Audio (DOA)** — Hardware Direction of Arrival via iFLYTEK CAE SDK on Jackie's 4-mic array; angle streamed to PC in real-time over WebSocket (binary `0x03` frame or JSON `doa` command)
-- **Jackie Integration** — WebSocket bridge for Android robot communication (audio, video, TTS, DOA)
+- **Local TTS** — Kokoro-82M TTS (~50-100ms synthesis latency with streaming)
+- **Directional Audio (DOA)** — Hardware Direction of Arrival via iFLYTEK CAE SDK on Jackie's 4-mic array; angle streamed to PC in real-time over WebSocket
+- **Jackie Integration** — WebSocket bridge for Android robot communication (audio, video, TTS, DOA, CAE status)
 - **Session Management** — Auto-timeout, farewell detection, quick re-engagement
+- **DOA-Visual Fusion** — Fuses speaker DOA angle with face positions for speaker selection (configurable, currently disabled)
 
 ## Architecture
 
@@ -198,13 +200,16 @@ Built-in system prompts for different use cases:
 
 ## Tech Stack
 
-- **ASR:** NVIDIA NeMo Parakeet TDT / OpenAI Whisper
-- **Vision:** MediaPipe, OpenCV
-- **ASD:** LASER (Landmark-Aware Speaker Estimation in Real-time)
+- **ASR:** NVIDIA NeMo Parakeet TDT / Faster-Whisper
+- **Speech Separation:** Dolphin AV-TSE (visual-audio separating with face detection)
+- **VAD:** Silero VAD (512-sample chunks at 16kHz)
+- **AEC:** WebRTC AEC (24kHz↔16kHz with resampling)
+- **Vision:** MediaPipe, OpenCV, L2CS-Net (gaze)
 - **LLM:** OpenAI GPT-4o-mini / Ollama (local)
-- **TTS:** Piper (local, ~70ms)
+- **TTS:** Kokoro-82M (local, ~50-100ms TTFB with streaming)
 - **Behavior:** py_trees
 - **Communication:** WebSocket (asyncio)
+- **GPU Inference:** PyTorch CUDA 12.8 (sm_120 Blackwell support)
 
 ## Authors
 

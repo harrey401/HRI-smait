@@ -18,6 +18,8 @@ torchaudio>=2.0.0
 # Speech Separation (Dolphin AV-TSE)
 # Install from: pip install git+https://github.com/JusperLee/Dolphin.git
 einops
+vector-quantize-pytorch
+beartype
 
 # ASR (NVIDIA Parakeet TDT 0.6B v2)
 nemo_toolkit[asr]>=2.0.0
