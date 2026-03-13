@@ -50,10 +50,14 @@ class DolphinSeparator:
     - separation_confidence: SNR improvement estimate
 
     Audio tensor: [1, samples] mono float32 at 16kHz.
-    Video tensor: [1, 1, T, 88, 88] grayscale lip crops (batch, group, frames, H, W, C).
+    Video tensor: [1, 1, T, 88, 88] grayscale lip crops (batch, channel, frames, H, W).
 
-    Fallback: If no raw 4-channel audio available, Dolphin works with
-    single-channel audio + visual features.
+    Multi-channel handling: When raw 4-channel audio is provided, channels
+    are averaged to mono before feeding to Dolphin. The spatial diversity
+    from multiple mics improves SNR compared to a single beamformed channel
+    when the CAE beam is not correctly steered toward the target speaker.
+
+    Fallback: If no raw 4-channel audio available, uses CAE beamformed mono.
     """
 
     def __init__(self, config: Config, event_bus: EventBus) -> None:
@@ -70,7 +74,7 @@ class DolphinSeparator:
             # Dolphin is loaded from the look2hear vendored library.
             # To vendor: copy the JusperLee/Dolphin look2hear/ directory into the project root.
             # Audio expects: (batch=1, samples) mono float32 at 16kHz
-            # Video expects: (batch=1, 1, T, H=88, W=88, C=1) grayscale
+            # Video expects: (batch=1, 1, T, H=88, W=88) grayscale
             from look2hear.models import Dolphin  # type: ignore[import-not-found]
 
             self._model = Dolphin.from_pretrained("JusperLee/Dolphin")

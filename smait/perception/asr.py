@@ -57,8 +57,26 @@ class ParakeetASR:
                 model_name=self._config.model,
             )
             self._model.eval()
+
+            # Disable CUDA graphs for Blackwell (sm_120) compatibility —
+            # NeMo's TDT decoder uses cu_call() which returns different tuple
+            # sizes on Blackwell's CUDA driver, causing unpacking errors.
+            try:
+                from omegaconf import OmegaConf
+                decoding_cfg = OmegaConf.create({
+                    "strategy": "greedy",
+                    "greedy": {
+                        "max_symbols": 10,
+                        "preserve_alignments": False,
+                        "confidence_cfg": {"preserve_frame_confidence": False},
+                    },
+                })
+                self._model.change_decoding_strategy(decoding_cfg)
+                logger.info("Parakeet TDT loaded (greedy decoding, CUDA graphs disabled)")
+            except Exception:
+                logger.warning("Could not change decoding strategy, using default")
+
             self._available = True
-            logger.info("Parakeet TDT loaded")
         except ImportError:
             logger.warning(
                 "NeMo not installed. ASR will be unavailable. "
@@ -91,7 +109,7 @@ class ParakeetASR:
             # NeMo 2.0 transcribe API
             # Parakeet expects: list of numpy arrays or file paths
             # Returns: tuple of (texts, timestamps) for TDT models
-            result = self._model.transcribe([audio], return_hypotheses=True)
+            result = self._model.transcribe([audio])
 
             # Handle NeMo 2.0 tuple return (Issue: NeMo returns (text, timestamps))
             if isinstance(result, tuple):

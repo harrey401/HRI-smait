@@ -27,7 +27,7 @@ class AudioConfig:
     sample_rate: int = 16000
     channels_raw: int = 4
     channels_cae: int = 1
-    chunk_duration_ms: int = 30
+    chunk_duration_ms: int = 32  # Silero VAD requires 512 samples = 32ms at 16kHz
     vad_threshold: float = 0.5
     min_speech_duration_ms: int = 250
     raw_buffer_seconds: float = 30.0

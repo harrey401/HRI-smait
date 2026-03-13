@@ -223,13 +223,23 @@ class HRISystem:
                     self.session.target_track_id, count=25
                 )
 
-            # Run separation — always pass CAE mono audio (channels=1)
-            # Dolphin takes mono [1, samples]; raw 4-channel would be wrong input
-            separation = await self.dolphin_separator.separate(
-                segment.cae_audio,   # Always CAE mono for Dolphin
-                lip_frames,
-                channels=1,
-            )
+            # Run separation — prefer raw 4-channel audio when available
+            # Raw multichannel preserves spatial information from 4-mic array.
+            # Dolphin downmixes to mono internally but having the original
+            # channels gives better signal than CAE's single beamformed output
+            # when the beam is pointed at the wrong speaker.
+            if segment.raw_audio is not None and self._config.separation.use_multichannel:
+                separation = await self.dolphin_separator.separate(
+                    segment.raw_audio,
+                    lip_frames,
+                    channels=self._config.audio.channels_raw,
+                )
+            else:
+                separation = await self.dolphin_separator.separate(
+                    segment.cae_audio,
+                    lip_frames,
+                    channels=1,
+                )
 
             sep_ms = self.metrics.stop_timer("separation")
             self.metrics.record("separation_confidence", separation.separation_confidence * 100)

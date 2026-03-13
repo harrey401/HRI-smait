@@ -217,8 +217,8 @@ class AudioPipeline:
         samples = np.frombuffer(data, dtype=np.int16).astype(np.float32) / 32768.0
         chunk_tensor = torch.from_numpy(samples)
 
-        # Run VAD on 30ms chunks (480 samples at 16kHz)
-        chunk_size = int(self._config.sample_rate * self._config.chunk_duration_ms / 1000)
+        # Run VAD in 512-sample chunks (32ms at 16kHz) — Silero requires exactly 512
+        chunk_size = 512
         offset = 0
 
         while offset + chunk_size <= len(chunk_tensor):
@@ -336,11 +336,34 @@ class AudioPipeline:
             logger.debug("CAE status updated: %s", data)
 
     def _on_tts_audio_chunk(self, data: object) -> None:
-        """Feed TTS audio chunks to the software AEC as far-end reference."""
+        """Feed TTS audio chunks to the software AEC as far-end reference.
+
+        TTS outputs 24kHz PCM16 but AEC runs at 16kHz, so we resample
+        the far-end reference before feeding it to the echo canceller.
+        """
         if isinstance(data, dict):
             pcm_bytes = data.get("audio")
             if isinstance(pcm_bytes, (bytes, bytearray)):
-                self._aec.feed_far(pcm_bytes)
+                resampled = self._resample_24k_to_16k(pcm_bytes)
+                self._aec.feed_far(resampled)
             elif hasattr(pcm_bytes, "tobytes"):
-                # numpy array or similar
-                self._aec.feed_far(pcm_bytes.tobytes())
+                resampled = self._resample_24k_to_16k(pcm_bytes.tobytes())
+                self._aec.feed_far(resampled)
+
+    @staticmethod
+    def _resample_24k_to_16k(pcm_bytes: bytes) -> bytes:
+        """Resample 24kHz PCM16 mono to 16kHz for AEC compatibility.
+
+        Uses simple linear interpolation (2/3 ratio). For echo cancellation
+        reference, this quality is sufficient — exact phase alignment matters
+        more than pristine audio quality.
+        """
+        samples_24k = np.frombuffer(pcm_bytes, dtype=np.int16).astype(np.float32)
+        n_out = int(len(samples_24k) * 16000 / 24000)
+        if n_out == 0:
+            return b""
+        # Linear interpolation resampling
+        x_old = np.linspace(0, 1, len(samples_24k))
+        x_new = np.linspace(0, 1, n_out)
+        samples_16k = np.interp(x_new, x_old, samples_24k)
+        return samples_16k.astype(np.int16).tobytes()
