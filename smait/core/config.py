@@ -74,6 +74,11 @@ class EngagementConfig:
     min_gaze_duration_s: float = 2.0
     disengage_gaze_timeout_s: float = 3.0
     face_area_threshold: int = 3000
+    # DOA fusion parameters
+    camera_fov_deg: float = 60.0       # Horizontal FOV of Jackie's camera
+    doa_weight: float = 1.0            # 0.0 = ignore DOA, 1.0 = full DOA scoring
+    doa_staleness_s: float = 2.0       # DOA older than this decays toward neutral
+    doa_smoothing_alpha: float = 0.3   # EMA smoothing: 0=slow response, 1=no smoothing
 
 
 @dataclass

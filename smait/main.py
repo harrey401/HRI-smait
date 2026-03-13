@@ -443,9 +443,10 @@ class HRISystem:
                 if self.lip_extractor:
                     self.lip_extractor.extract(frame_data.image, track, timestamp)
 
-            # Engagement detection
+            # Engagement detection (pass frame width for DOA-to-pixel mapping)
             if self.engagement_detector:
-                self.engagement_detector.update(tracks, gaze_results, timestamp)
+                frame_w = frame_data.image.shape[1]
+                self.engagement_detector.update(tracks, gaze_results, timestamp, frame_w)
 
             await asyncio.sleep(0.033)  # ~30 FPS
 

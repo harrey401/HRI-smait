@@ -45,7 +45,11 @@ class EngagementDetector:
         self._event_bus = event_bus
         self._state = EngagementState.IDLE
         self._target_track_id: Optional[int] = None
-        self._last_doa_angle: Optional[int] = None
+
+        # DOA state: raw, smoothed (EMA), and timestamp
+        self._last_doa_angle: Optional[float] = None
+        self._smoothed_doa_angle: Optional[float] = None
+        self._doa_timestamp: Optional[float] = None
 
         # Per-face tracking state
         self._gaze_start: dict[int, float] = {}  # track_id → first gaze time
@@ -68,8 +72,18 @@ class EngagementDetector:
         tracks: list[FaceTrack],
         gaze_results: dict[int, GazeResult],
         timestamp: float,
+        frame_width: int = 640,
     ) -> None:
-        """Update engagement state based on current face tracks and gaze."""
+        """Update engagement state based on current face tracks and gaze.
+
+        Args:
+            tracks: Current face tracks from FaceTracker.
+            gaze_results: Per-track gaze estimation results.
+            timestamp: Current monotonic time.
+            frame_width: Camera frame width in pixels (for DOA-to-pixel mapping).
+        """
+        self._frame_width = frame_width
+
         # Clean up stale entries
         active_ids = {t.track_id for t in tracks}
         self._gaze_start = {k: v for k, v in self._gaze_start.items() if k in active_ids}
@@ -122,7 +136,7 @@ class EngagementDetector:
                     del self._gaze_start[tid]
 
         # Find best candidate that meets approaching criteria
-        best_candidate = self._select_primary_user(tracks, gaze_results)
+        best_candidate = self._select_primary_user(tracks, gaze_results, timestamp)
         if best_candidate and best_candidate.track_id in self._gaze_start:
             self._state = EngagementState.APPROACHING
             self._target_track_id = best_candidate.track_id
@@ -238,42 +252,65 @@ class EngagementDetector:
     def _doa_score_for_face(
         self,
         track: FaceTrack,
-        frame_width: int = 640,
-        camera_fov_deg: float = 60.0,
+        timestamp: float = 0.0,
     ) -> float:
         """Return DOA alignment multiplier based on angular proximity.
 
         Maps the face's pixel position to a camera angle, then computes how
-        closely it aligns with the DOA direction. Returns 1.0 for perfect
-        alignment and 0.5 for a face 90+ degrees away from DOA.
+        closely it aligns with the smoothed DOA direction. Applies staleness
+        decay so old DOA readings fade toward neutral (1.0).
+
+        Uses config values: camera_fov_deg, doa_weight, doa_staleness_s.
+        Uses stored frame_width from the last update() call.
 
         Args:
-            track: FaceTrack with bbox=(x, y, w, h)
-            frame_width: Camera frame width in pixels (default 640)
-            camera_fov_deg: Camera horizontal field of view in degrees (default 60)
+            track: FaceTrack with bbox=(x, y, w, h).
+            timestamp: Current time for staleness calculation.
 
         Returns:
-            Multiplier in [0.5, 1.0] — higher means closer to DOA direction.
+            Multiplier in [0.5, 1.0] -- higher means closer to DOA direction.
+            Returns 1.0 (neutral) when DOA data is unavailable or fully stale.
         """
-        if self._last_doa_angle is None:
-            return 1.0  # No DOA data — no penalty applied
+        if self._smoothed_doa_angle is None:
+            return 1.0  # No DOA data -- no penalty applied
+
+        # Staleness decay: DOA older than doa_staleness_s fades toward neutral
+        freshness = 1.0
+        if self._doa_timestamp is not None and timestamp > 0.0:
+            age = timestamp - self._doa_timestamp
+            staleness_limit = self._config.doa_staleness_s
+            if staleness_limit > 0.0 and age > 0.0:
+                freshness = max(0.0, 1.0 - age / staleness_limit)
+
+        if freshness <= 0.0:
+            return 1.0  # DOA fully stale
 
         # FaceTrack.bbox is (x, y, w, h)
         x, _y, w, _h = track.bbox
         face_center_x = x + w / 2
+
+        frame_width = getattr(self, "_frame_width", 640)
+        camera_fov_deg = self._config.camera_fov_deg
 
         # Map pixel X to camera angle: center=0, left=negative, right=positive
         normalized = (face_center_x / frame_width) - 0.5  # [-0.5, 0.5]
         face_angle_deg = normalized * camera_fov_deg
 
         # DOA: 0=front, negative=left, positive=right
-        angular_distance = abs(face_angle_deg - self._last_doa_angle)
-        return max(0.5, 1.0 - angular_distance / 90.0)
+        angular_distance = abs(face_angle_deg - self._smoothed_doa_angle)
+        raw_score = max(0.5, 1.0 - angular_distance / 90.0)
+
+        # Blend toward neutral (1.0) based on weight and freshness
+        weight = self._config.doa_weight * freshness
+        score = 1.0 + (raw_score - 1.0) * weight
+
+        return score
 
     def _select_primary_user(
         self,
         tracks: list[FaceTrack],
         gaze_results: dict[int, GazeResult],
+        timestamp: float = 0.0,
     ) -> Optional[FaceTrack]:
         """Select the primary user: largest face + direct gaze + DOA alignment."""
         candidates = []
@@ -282,15 +319,24 @@ class EngagementDetector:
             if gaze and gaze.is_looking_at_robot:
                 if track.face_area >= self._config.face_area_threshold:
                     if not self._is_walking_past(track.track_id):
-                        score = track.face_area
-                        # Per-face DOA alignment scoring (angular proximity)
-                        score *= self._doa_score_for_face(track)
-                        candidates.append((score, track))
+                        doa_mult = self._doa_score_for_face(track, timestamp)
+                        score = track.face_area * doa_mult
+                        candidates.append((score, doa_mult, track))
 
         if not candidates:
             return None
         candidates.sort(key=lambda x: x[0], reverse=True)
-        return candidates[0][1]
+
+        if len(candidates) > 1:
+            winner = candidates[0]
+            logger.debug(
+                "Primary user: track_id=%d (score=%.0f, doa_mult=%.3f) "
+                "over %d other candidate(s)",
+                winner[2].track_id, winner[0], winner[1],
+                len(candidates) - 1,
+            )
+
+        return candidates[0][2]
 
     def _is_walking_past(self, track_id: int) -> bool:
         """Detect rapidly changing face area (person walking past)."""
@@ -314,7 +360,19 @@ class EngagementDetector:
 
     def _on_doa_update(self, data: object) -> None:
         if isinstance(data, dict):
-            self._last_doa_angle = data.get("angle")
+            angle = data.get("angle")
+            if angle is not None:
+                self._last_doa_angle = float(angle)
+                self._doa_timestamp = data.get("timestamp", time.monotonic())
+                # EMA smoothing
+                alpha = self._config.doa_smoothing_alpha
+                if self._smoothed_doa_angle is None:
+                    self._smoothed_doa_angle = self._last_doa_angle
+                else:
+                    self._smoothed_doa_angle = (
+                        alpha * self._last_doa_angle
+                        + (1.0 - alpha) * self._smoothed_doa_angle
+                    )
 
     def reset(self) -> None:
         """Reset engagement state (e.g., on session end)."""
@@ -323,3 +381,6 @@ class EngagementDetector:
         self._gaze_start.clear()
         self._area_history.clear()
         self._disengage_start = None
+        self._last_doa_angle = None
+        self._smoothed_doa_angle = None
+        self._doa_timestamp = None

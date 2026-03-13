@@ -6,7 +6,11 @@ Tests cover:
 - ENGAGEMENT_START and ENGAGEMENT_LOST events
 - Walking-past filter suppresses rapidly-moving faces
 - DOA bonus scoring in primary user selection
-- reset() clears all state
+- DOA EMA smoothing across multiple updates
+- DOA staleness decay (old angles fade toward neutral)
+- DOA weight configurability
+- Frame width propagation to DOA scoring
+- reset() clears all state including DOA
 """
 
 from __future__ import annotations
@@ -366,8 +370,221 @@ def test_doa_angle_disambiguates_multiple_faces(event_bus, config):
 
     assert result is not None, "Expected a primary user to be selected"
     assert result.track_id == 20, (
-        f"Expected face B (track_id=20, near DOA=0, score≈9740) to win over "
-        f"face A (track_id=10, off-angle, score≈7810), "
+        f"Expected face B (track_id=20, near DOA=0, score~9740) to win over "
+        f"face A (track_id=10, off-angle, score~7810), "
         f"but got track_id={result.track_id}. "
         f"Per-face DOA scoring must prefer angular proximity (equal area tiebreaker)."
     )
+
+
+# ---------------------------------------------------------------------------
+# DOA EMA smoothing tests
+# ---------------------------------------------------------------------------
+
+def test_doa_ema_smoothing(event_bus, config):
+    """Multiple DOA updates produce a smoothed angle via EMA.
+
+    With alpha=0.3 (default):
+      emit 0  -> smoothed = 0
+      emit 60 -> smoothed = 0.3*60 + 0.7*0 = 18
+      emit 60 -> smoothed = 0.3*60 + 0.7*18 = 30.6
+    """
+    detector = EngagementDetector(config, event_bus)
+
+    event_bus.emit(EventType.DOA_UPDATE, {"angle": 0, "timestamp": 1.0})
+    assert detector._smoothed_doa_angle == pytest.approx(0.0)
+
+    event_bus.emit(EventType.DOA_UPDATE, {"angle": 60, "timestamp": 1.1})
+    assert detector._smoothed_doa_angle == pytest.approx(18.0)
+
+    event_bus.emit(EventType.DOA_UPDATE, {"angle": 60, "timestamp": 1.2})
+    assert detector._smoothed_doa_angle == pytest.approx(30.6)
+
+
+def test_doa_first_update_sets_smoothed_directly(event_bus, config):
+    """First DOA update initializes smoothed angle without blending."""
+    detector = EngagementDetector(config, event_bus)
+
+    event_bus.emit(EventType.DOA_UPDATE, {"angle": 45, "timestamp": 1.0})
+    assert detector._smoothed_doa_angle == pytest.approx(45.0)
+    assert detector._last_doa_angle == pytest.approx(45.0)
+
+
+# ---------------------------------------------------------------------------
+# DOA staleness decay tests
+# ---------------------------------------------------------------------------
+
+def test_doa_staleness_decays_score_toward_neutral(event_bus, config):
+    """DOA score decays toward 1.0 as the DOA reading ages.
+
+    doa_staleness_s=2.0 (default). At age=1.0s, freshness=0.5.
+    A face perfectly aligned with DOA would get raw_score=1.0,
+    so even with decay the score stays 1.0 for aligned faces.
+    Test with an off-center face to see the decay effect.
+    """
+    detector = EngagementDetector(config, event_bus)
+
+    # DOA at 0 degrees, timestamp=10.0
+    event_bus.emit(EventType.DOA_UPDATE, {"angle": 0, "timestamp": 10.0})
+
+    # Face far left of frame -> face_angle ~ -19.7 deg -> raw DOA score < 1.0
+    landmarks = np.random.rand(468, 3).astype(np.float32)
+    face = FaceTrack(
+        track_id=1, bbox=(50, 100, 120, 120), landmarks=landmarks,
+        face_area=10000, last_seen=0.0, confidence=0.9,
+    )
+
+    # Score at timestamp=10.0 (fresh, age=0) -- full DOA effect
+    detector._frame_width = 640
+    score_fresh = detector._doa_score_for_face(face, timestamp=10.0)
+
+    # Score at timestamp=11.0 (age=1.0s, freshness=0.5) -- partial decay
+    score_aged = detector._doa_score_for_face(face, timestamp=11.0)
+
+    # Score at timestamp=12.0 (age=2.0s, freshness=0.0) -- fully stale
+    score_stale = detector._doa_score_for_face(face, timestamp=12.0)
+
+    # Fresh score should show DOA penalty (< 1.0)
+    assert score_fresh < 1.0, "Fresh DOA should penalize off-angle face"
+    # Aged score should be closer to 1.0 than fresh
+    assert score_aged > score_fresh, "Aged DOA should decay toward neutral"
+    # Fully stale should be exactly 1.0
+    assert score_stale == pytest.approx(1.0), "Stale DOA should be neutral"
+
+
+# ---------------------------------------------------------------------------
+# DOA weight configurability tests
+# ---------------------------------------------------------------------------
+
+def test_doa_weight_zero_disables_doa(event_bus, config):
+    """With doa_weight=0.0, DOA has no effect on scoring."""
+    config.engagement.doa_weight = 0.0
+    detector = EngagementDetector(config, event_bus)
+
+    event_bus.emit(EventType.DOA_UPDATE, {"angle": 0, "timestamp": 1.0})
+
+    landmarks = np.random.rand(468, 3).astype(np.float32)
+    face = FaceTrack(
+        track_id=1, bbox=(50, 100, 120, 120), landmarks=landmarks,
+        face_area=10000, last_seen=0.0, confidence=0.9,
+    )
+    detector._frame_width = 640
+
+    score = detector._doa_score_for_face(face, timestamp=1.0)
+    assert score == pytest.approx(1.0), "doa_weight=0 should give neutral score"
+
+
+def test_doa_weight_half_reduces_effect(event_bus, config):
+    """With doa_weight=0.5, DOA effect is halved."""
+    # Get full-weight score first
+    config.engagement.doa_weight = 1.0
+    det_full = EngagementDetector(config, event_bus)
+    event_bus.emit(EventType.DOA_UPDATE, {"angle": 0, "timestamp": 1.0})
+    det_full._frame_width = 640
+
+    landmarks = np.random.rand(468, 3).astype(np.float32)
+    face = FaceTrack(
+        track_id=1, bbox=(50, 100, 120, 120), landmarks=landmarks,
+        face_area=10000, last_seen=0.0, confidence=0.9,
+    )
+    score_full = det_full._doa_score_for_face(face, timestamp=1.0)
+
+    # Now half-weight
+    config.engagement.doa_weight = 0.5
+    event_bus2 = EventBus()
+    det_half = EngagementDetector(config, event_bus2)
+    event_bus2.emit(EventType.DOA_UPDATE, {"angle": 0, "timestamp": 1.0})
+    det_half._frame_width = 640
+
+    score_half = det_half._doa_score_for_face(face, timestamp=1.0)
+
+    # Half-weight deviation from 1.0 should be half of full-weight deviation
+    dev_full = 1.0 - score_full
+    dev_half = 1.0 - score_half
+    assert dev_half == pytest.approx(dev_full * 0.5, abs=0.01)
+
+
+# ---------------------------------------------------------------------------
+# Frame width propagation test
+# ---------------------------------------------------------------------------
+
+def test_frame_width_propagated_to_doa_scoring(event_bus, config):
+    """update() stores frame_width for use in DOA scoring.
+
+    Face at center_x=110px with DOA=0:
+    - In 320px frame: normalized = 110/320 - 0.5 = -0.156, angle = -9.4 deg (close to center)
+    - In 1280px frame: normalized = 110/1280 - 0.5 = -0.414, angle = -24.8 deg (far from center)
+    So the wider frame gives a larger angular offset for the same pixel position.
+    """
+    detector = EngagementDetector(config, event_bus)
+    event_bus.emit(EventType.DOA_UPDATE, {"angle": 0, "timestamp": 1.0})
+
+    landmarks = np.random.rand(468, 3).astype(np.float32)
+    face = FaceTrack(
+        track_id=1, bbox=(50, 100, 120, 120), landmarks=landmarks,
+        face_area=10000, last_seen=0.0, confidence=0.9,
+    )
+    gaze = _make_gaze(1, True, 1.0)
+
+    # Small frame (320px): face center at 110px is relatively near-center
+    detector.update([face], {1: gaze}, 1.0, frame_width=320)
+    score_narrow = detector._doa_score_for_face(face, timestamp=1.0)
+
+    # Wide frame (1280px): face center at 110px is far left of frame
+    detector.update([face], {1: gaze}, 1.0, frame_width=1280)
+    score_wide = detector._doa_score_for_face(face, timestamp=1.0)
+
+    # In wide frame, same pixel position = further from center = lower DOA score
+    assert score_wide < score_narrow, (
+        "Wider frame should map same pixel to larger angular offset, lower DOA score"
+    )
+    # Both should differ (frame_width matters)
+    assert score_wide != score_narrow, "Scores must differ with different frame widths"
+
+
+# ---------------------------------------------------------------------------
+# Reset clears DOA state test
+# ---------------------------------------------------------------------------
+
+def test_reset_clears_doa_state(event_bus, config):
+    """reset() clears DOA angle, smoothed angle, and timestamp."""
+    detector = EngagementDetector(config, event_bus)
+
+    event_bus.emit(EventType.DOA_UPDATE, {"angle": 30, "timestamp": 1.0})
+    assert detector._last_doa_angle is not None
+    assert detector._smoothed_doa_angle is not None
+    assert detector._doa_timestamp is not None
+
+    detector.reset()
+
+    assert detector._last_doa_angle is None
+    assert detector._smoothed_doa_angle is None
+    assert detector._doa_timestamp is None
+
+
+# ---------------------------------------------------------------------------
+# No DOA = gaze-only fallback test
+# ---------------------------------------------------------------------------
+
+def test_no_doa_falls_back_to_gaze_only(event_bus, config):
+    """Without any DOA_UPDATE, all faces get neutral DOA score (1.0).
+
+    Primary user selection degrades gracefully to face_area + gaze only.
+    """
+    detector = EngagementDetector(config, event_bus)
+
+    # No DOA_UPDATE emitted
+
+    track1 = _make_track(track_id=1, face_area=8000)
+    track2 = _make_track(track_id=2, face_area=12000)
+
+    gaze1 = _make_gaze(1, True, 0.0)
+    gaze2 = _make_gaze(2, True, 0.0)
+
+    result = detector._select_primary_user(
+        [track1, track2], {1: gaze1, 2: gaze2}, timestamp=0.0,
+    )
+
+    # Largest face wins when DOA is absent
+    assert result is not None
+    assert result.track_id == 2
