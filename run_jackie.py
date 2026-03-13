@@ -21,6 +21,17 @@ import asyncio
 import logging
 import os
 import sys
+from pathlib import Path
+
+# Load .env file if present
+_env_path = Path(__file__).resolve().parent / ".env"
+if _env_path.exists():
+    with open(_env_path) as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                key, _, value = line.partition("=")
+                os.environ.setdefault(key.strip(), value.strip())
 
 # Disable CUDA graphs for Blackwell (sm_120) / RTX 5070
 os.environ.setdefault("NEMO_DISABLE_CUDA_GRAPHS", "1")
