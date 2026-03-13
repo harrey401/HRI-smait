@@ -31,11 +31,11 @@ A real-time Human-Robot Interaction framework that enables natural, face-to-face
 │   (Android/RK3588)   │   audio/video  │                      │
 │                      │ ─────────────→ │  ASR (Parakeet/FW)   │
 │   4-mic array (CAE)  │                │  Face Tracking        │
-│   Camera (2MP)       │   TTS/commands │  ASD (LASER)         │
+│   Camera (2MP)       │   TTS/commands │  Dolphin AV-TSE       │
 │   15.6" Touchscreen  │ ←──────────── │  Engagement Detection │
 │   Speakers (2x)      │                │  LLM Dialogue         │
 │                      │                │  Behavior Trees        │
-└─────────────────────┘                │  Piper TTS            │
+└─────────────────────┘                │  Kokoro TTS           │
                                         └──────────────────────┘
 ```
 
@@ -204,12 +204,12 @@ Built-in system prompts for different use cases:
 - **Speech Separation:** Dolphin AV-TSE (visual-audio separating with face detection)
 - **VAD:** Silero VAD (512-sample chunks at 16kHz)
 - **AEC:** WebRTC AEC (24kHz↔16kHz with resampling)
-- **Vision:** MediaPipe, OpenCV, L2CS-Net (gaze)
+- **Vision:** MediaPipe Face Landmarker (mp.tasks API), OpenCV, L2CS-Net (gaze)
 - **LLM:** OpenAI GPT-4o-mini / Ollama (local)
 - **TTS:** Kokoro-82M (local, ~50-100ms TTFB with streaming)
 - **Behavior:** py_trees
 - **Communication:** WebSocket (asyncio)
-- **GPU Inference:** PyTorch CUDA 12.8 (sm_120 Blackwell support)
+- **GPU Inference:** PyTorch 2.7 + CUDA 12.8 (Blackwell sm_1200 support)
 
 ## Authors
 
