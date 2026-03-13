@@ -1,14 +1,18 @@
-"""MediaPipe Face Mesh with persistent track IDs via IOU matching."""
+"""MediaPipe Face Landmarker with persistent track IDs via IOU matching."""
 
 from __future__ import annotations
 
 import logging
+import os
 import time
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Optional
 
 import cv2
 import mediapipe as mp
+from mediapipe.tasks import python as mp_python
+from mediapipe.tasks.python import vision
 import numpy as np
 
 from smait.core.config import Config
@@ -21,13 +25,17 @@ IOU_THRESHOLD = 0.3
 # Time before a lost face is removed from tracking
 FACE_LOST_TIMEOUT_S = 2.0
 
+# Default model path (relative to project root)
+_DEFAULT_MODEL_PATH = Path(__file__).resolve().parents[2] / "models" / "face_landmarker.task"
+_MODEL_URL = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task"
+
 
 @dataclass
 class FaceTrack:
     """A persistently tracked face."""
     track_id: int
     bbox: tuple[int, int, int, int]  # (x, y, w, h)
-    landmarks: np.ndarray             # (468, 3) normalized landmarks
+    landmarks: np.ndarray             # (478, 3) normalized landmarks
     head_yaw: float = 0.0
     head_pitch: float = 0.0
     last_seen: float = 0.0
@@ -41,8 +49,20 @@ class FaceTrack:
         return (x + w / 2, y + h / 2)
 
 
+def _ensure_model(path: Path) -> Path:
+    """Download the face landmarker model if not present."""
+    if path.exists():
+        return path
+    logger.info("Downloading face_landmarker.task model...")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    import urllib.request
+    urllib.request.urlretrieve(_MODEL_URL, str(path))
+    logger.info("Model saved to %s", path)
+    return path
+
+
 class FaceTracker:
-    """MediaPipe Face Mesh: 468 landmarks per face, persistent track IDs.
+    """MediaPipe Face Landmarker: 478 landmarks per face, persistent track IDs.
 
     - Re-association after brief occlusion via IOU + centroid matching
     - Emits FACE_DETECTED, FACE_LOST, FACE_UPDATED events
@@ -54,15 +74,21 @@ class FaceTracker:
         self._event_bus = event_bus
         self._next_id = 1
         self._tracks: dict[int, FaceTrack] = {}
+        self._last_timestamp_ms = -1
 
-        # MediaPipe Face Mesh
-        self._face_mesh = mp.solutions.face_mesh.FaceMesh(
-            static_image_mode=False,
-            max_num_faces=self._config.max_faces,
-            refine_landmarks=True,
-            min_detection_confidence=self._config.min_face_confidence,
+        # Resolve model path
+        model_path = _ensure_model(_DEFAULT_MODEL_PATH)
+
+        # MediaPipe Face Landmarker (VIDEO mode for sequential frames)
+        options = vision.FaceLandmarkerOptions(
+            base_options=mp_python.BaseOptions(model_asset_path=str(model_path)),
+            running_mode=vision.RunningMode.VIDEO,
+            num_faces=self._config.max_faces,
+            min_face_detection_confidence=self._config.min_face_confidence,
+            min_face_presence_confidence=0.5,
             min_tracking_confidence=0.5,
         )
+        self._landmarker = vision.FaceLandmarker.create_from_options(options)
 
     def process_frame(self, image: np.ndarray, timestamp: float) -> list[FaceTrack]:
         """Process a BGR frame and return updated face tracks."""
@@ -70,14 +96,22 @@ class FaceTracker:
 
         # MediaPipe expects RGB
         rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        results = self._face_mesh.process(rgb)
+        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
+
+        # Timestamp must be strictly increasing integer ms
+        timestamp_ms = int(timestamp * 1000)
+        if timestamp_ms <= self._last_timestamp_ms:
+            timestamp_ms = self._last_timestamp_ms + 1
+        self._last_timestamp_ms = timestamp_ms
+
+        results = self._landmarker.detect_for_video(mp_image, timestamp_ms)
 
         current_detections: list[tuple[tuple[int, int, int, int], np.ndarray, float]] = []
 
-        if results.multi_face_landmarks:
-            for face_landmarks in results.multi_face_landmarks:
+        if results.face_landmarks:
+            for face_landmarks in results.face_landmarks:
                 landmarks = np.array(
-                    [(lm.x, lm.y, lm.z) for lm in face_landmarks.landmark],
+                    [(lm.x, lm.y, lm.z) for lm in face_landmarks],
                     dtype=np.float32,
                 )
 
@@ -92,7 +126,7 @@ class FaceTracker:
                 # Estimate head pose from key landmarks (nose tip, chin, etc.)
                 yaw, pitch = self._estimate_head_pose(landmarks, w, h)
 
-                # Confidence from face area (proxy — MediaPipe doesn't expose per-face confidence directly)
+                # Confidence from face area (proxy)
                 confidence = min(1.0, area / 20000.0)
 
                 current_detections.append((bbox, landmarks, confidence))
@@ -264,4 +298,4 @@ class FaceTracker:
             track.is_target = (tid == track_id)
 
     def close(self) -> None:
-        self._face_mesh.close()
+        self._landmarker.close()

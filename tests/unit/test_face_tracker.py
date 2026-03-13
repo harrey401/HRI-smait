@@ -24,7 +24,7 @@ from smait.perception.face_tracker import FaceTrack, FaceTracker
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _make_landmarks(n: int = 468) -> np.ndarray:
+def _make_landmarks(n: int = 478) -> np.ndarray:
     """Create synthetic normalized landmarks array of shape (n, 3)."""
     rng = np.random.default_rng(42)
     lm = rng.uniform(0.3, 0.7, size=(n, 3)).astype(np.float32)
@@ -33,7 +33,7 @@ def _make_landmarks(n: int = 468) -> np.ndarray:
 
 def _make_face_detection(
     bbox: tuple[int, int, int, int] = (10, 10, 80, 80),
-    n_landmarks: int = 468,
+    n_landmarks: int = 478,
     confidence: float = 0.9,
 ) -> tuple[tuple[int, int, int, int], np.ndarray, float]:
     """Create a synthetic (bbox, landmarks, confidence) detection tuple."""
@@ -41,15 +41,16 @@ def _make_face_detection(
 
 
 def _make_tracker_with_mock(config, event_bus) -> FaceTracker:
-    """Create a FaceTracker with MediaPipe FaceMesh mocked out.
+    """Create a FaceTracker with MediaPipe FaceLandmarker mocked out.
 
-    Patches `smait.perception.face_tracker.mp` to avoid importing the real
-    mediapipe.solutions module (which is not available in this environment).
+    Patches the vision module to avoid loading the real model file.
     """
-    mock_mp = MagicMock()
-    mock_instance = MagicMock()
-    mock_mp.solutions.face_mesh.FaceMesh.return_value = mock_instance
-    with patch("smait.perception.face_tracker.mp", mock_mp):
+    mock_landmarker = MagicMock()
+    with patch("smait.perception.face_tracker.vision") as mock_vision, \
+         patch("smait.perception.face_tracker._ensure_model", return_value="/fake/model.task"):
+        mock_vision.FaceLandmarkerOptions = MagicMock()
+        mock_vision.FaceLandmarker.create_from_options.return_value = mock_landmarker
+        mock_vision.RunningMode.VIDEO = "VIDEO"
         tracker = FaceTracker(config, event_bus)
     return tracker
 
@@ -95,8 +96,8 @@ def test_iou_symmetric():
 # ---------------------------------------------------------------------------
 
 def test_head_pose_estimation():
-    """_estimate_head_pose returns (float, float) from valid 468-point landmarks."""
-    landmarks = _make_landmarks(468)
+    """_estimate_head_pose returns (float, float) from valid 478-point landmarks."""
+    landmarks = _make_landmarks(478)
     yaw, pitch = FaceTracker._estimate_head_pose(landmarks, w=640, h=480)
     assert isinstance(yaw, float)
     assert isinstance(pitch, float)
@@ -166,8 +167,8 @@ def test_match_and_update_emits_face_detected(config, event_bus):
 # FACE_LOST Event Test
 # ---------------------------------------------------------------------------
 
-def _make_mock_face_landmark(x: float, y: float, z: float = 0.0) -> MagicMock:
-    """Create a mock landmark with x, y, z attributes."""
+def _make_mock_normalized_landmark(x: float, y: float, z: float = 0.0) -> MagicMock:
+    """Create a mock NormalizedLandmark with x, y, z attributes."""
     lm = MagicMock()
     lm.x = x
     lm.y = y
@@ -175,17 +176,14 @@ def _make_mock_face_landmark(x: float, y: float, z: float = 0.0) -> MagicMock:
     return lm
 
 
-def _make_mock_face_landmarks(n: int = 468) -> MagicMock:
-    """Create a mock face_landmarks object with .landmark list."""
-    face_lm = MagicMock()
-    # Create 468 landmarks spread across face region
+def _make_mock_face_landmarks_list(n: int = 478) -> list:
+    """Create a list of mock NormalizedLandmark objects (new API format)."""
     landmarks = []
     for i in range(n):
         x = 0.3 + (i % 20) * 0.02  # x range 0.3 - 0.68
         y = 0.3 + (i // 20) * 0.02  # y range 0.3 - 0.74
-        landmarks.append(_make_mock_face_landmark(x, y, 0.0))
-    face_lm.landmark = landmarks
-    return face_lm
+        landmarks.append(_make_mock_normalized_landmark(x, y, 0.0))
+    return landmarks
 
 
 def test_face_lost_emitted_after_timeout(config, event_bus):
@@ -193,22 +191,28 @@ def test_face_lost_emitted_after_timeout(config, event_bus):
     lost_events: list = []
     event_bus.subscribe(EventType.FACE_LOST, lambda data: lost_events.append(data))
 
-    mock_mp = MagicMock()
-    mock_instance = MagicMock()
-    mock_mp.solutions.face_mesh.FaceMesh.return_value = mock_instance
+    mock_landmarker = MagicMock()
 
-    with patch("smait.perception.face_tracker.mp", mock_mp):
+    with patch("smait.perception.face_tracker.vision") as mock_vision, \
+         patch("smait.perception.face_tracker._ensure_model", return_value="/fake/model.task"), \
+         patch("smait.perception.face_tracker.mp") as mock_mp:
+        mock_vision.FaceLandmarkerOptions = MagicMock()
+        mock_vision.FaceLandmarker.create_from_options.return_value = mock_landmarker
+        mock_vision.RunningMode.VIDEO = "VIDEO"
+
         tracker = FaceTracker(config, event_bus)
 
         # Frame 1: One face detected at t=0.0
         mock_results_with_face = MagicMock()
-        mock_results_with_face.multi_face_landmarks = [_make_mock_face_landmarks(468)]
-        mock_instance.process.return_value = mock_results_with_face
+        mock_results_with_face.face_landmarks = [_make_mock_face_landmarks_list(478)]
+        mock_landmarker.detect_for_video.return_value = mock_results_with_face
 
-        # cv2.cvtColor also needs mocking since we pass a frame through it
+        mock_mp.Image.return_value = MagicMock()
+        mock_mp.ImageFormat.SRGB = "SRGB"
+
         with patch("smait.perception.face_tracker.cv2") as mock_cv2:
             mock_cv2.cvtColor.return_value = np.zeros((480, 640, 3), dtype=np.uint8)
-            mock_cv2.COLOR_BGR2RGB = 4  # cv2 constant
+            mock_cv2.COLOR_BGR2RGB = 4
 
             frame = np.zeros((480, 640, 3), dtype=np.uint8)
             tracks = tracker.process_frame(frame, timestamp=0.0)
@@ -216,8 +220,8 @@ def test_face_lost_emitted_after_timeout(config, event_bus):
 
             # Frame 2: No faces at t=2.1s (> FACE_LOST_TIMEOUT_S=2.0)
             mock_results_no_face = MagicMock()
-            mock_results_no_face.multi_face_landmarks = None
-            mock_instance.process.return_value = mock_results_no_face
+            mock_results_no_face.face_landmarks = None
+            mock_landmarker.detect_for_video.return_value = mock_results_no_face
 
             tracker.process_frame(frame, timestamp=2.1)
 

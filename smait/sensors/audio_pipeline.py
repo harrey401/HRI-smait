@@ -207,6 +207,14 @@ class AudioPipeline:
         if self._vad_model is None:
             return
 
+        # Log first frame for format diagnostics
+        if not getattr(self, "_first_frame_logged", False):
+            self._first_frame_logged = True
+            logger.info(
+                "First CAE frame: %d bytes (expect multiple of 1024 for 16kHz int16)",
+                len(data),
+            )
+
         # Apply software AEC if hardware AEC is not active
         if self._aec.available and not self._cae_status.get("aec", False):
             processed = self._aec.process_near(data)
