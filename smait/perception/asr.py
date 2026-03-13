@@ -122,7 +122,9 @@ class ParakeetASR:
                 texts = [str(result)]
                 word_ts = []
 
-            text = texts[0] if texts else ""
+            raw = texts[0] if texts else ""
+            # NeMo may return a Hypothesis object instead of a plain string
+            text = raw.text if hasattr(raw, "text") else str(raw)
             timestamps = word_ts[0] if word_ts and len(word_ts) > 0 else []
 
             # Extract confidence from NeMo hypotheses (with fallback to 0.65)
