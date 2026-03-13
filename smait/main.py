@@ -279,8 +279,17 @@ class HRISystem:
             asr_ms = self.metrics.stop_timer("asr")
 
             if result:
-                # Update EOU detector with transcript
-                self.eou_detector.update_transcript(result.text, time.monotonic())
+                # The speech segment was already cut by VAD silence detection,
+                # so this is a complete utterance. Emit END_OF_TURN directly.
+                now = time.monotonic()
+                logger.info("Emitting END_OF_TURN for: '%s'", result.text)
+                self._event_bus.emit(EventType.END_OF_TURN, {
+                    "text": result.text,
+                    "confidence": result.confidence,
+                    "reason": "vad_segment_complete",
+                    "timestamp": now,
+                    "silence_ms": 0,
+                })
 
                 # Update turn log
                 turn = self.data_logger.start_turn()
