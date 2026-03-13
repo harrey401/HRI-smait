@@ -252,6 +252,13 @@ class AudioPipeline:
                     return  # Stop processing further chunks after barge-in
                 # No speech during TTS: suppress segment accumulation
             else:
+                # Feed VAD probability to EOU detector for turn-taking
+                self._event_bus.emit(EventType.VAD_PROB, {
+                    "speech_prob": speech_prob,
+                    "n_samples": chunk_size,
+                    "timestamp": timestamp,
+                })
+
                 # Normal listening mode: accumulate speech segments
                 if speech_prob >= self._vad_threshold:
                     if not self._in_speech:

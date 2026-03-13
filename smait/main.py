@@ -283,7 +283,7 @@ class HRISystem:
                 # so this is a complete utterance. Emit END_OF_TURN directly.
                 now = time.monotonic()
                 logger.info("Emitting END_OF_TURN for: '%s'", result.text)
-                self._event_bus.emit(EventType.END_OF_TURN, {
+                self.event_bus.emit(EventType.END_OF_TURN, {
                     "text": result.text,
                     "confidence": result.confidence,
                     "reason": "vad_segment_complete",
@@ -341,6 +341,17 @@ class HRISystem:
                     self.data_logger.end_turn()
 
         self.event_bus.subscribe(EventType.END_OF_TURN, on_end_of_turn)
+
+        # VAD probabilities → EOU detector (primary turn-taking path)
+        def on_vad_prob(data: object) -> None:
+            if isinstance(data, dict):
+                self.eou_detector.feed_vad_prob(
+                    data["speech_prob"],
+                    data["n_samples"],
+                    data["timestamp"],
+                )
+
+        self.event_bus.subscribe(EventType.VAD_PROB, on_vad_prob)
 
         # CAE status check (Issue #1)
         def on_cae_status(data: object) -> None:

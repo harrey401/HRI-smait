@@ -56,6 +56,9 @@ class EventType(Enum):
     CONNECTION_OPEN = auto()
     CONNECTION_CLOSED = auto()
 
+    # VAD
+    VAD_PROB = auto()
+
     # System
     ERROR = auto()
 
