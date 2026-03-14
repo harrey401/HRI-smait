@@ -112,8 +112,8 @@ Requirements for milestone v2.0. Continues from v1.0 phases.
 
 ### Display & UI
 
-- [ ] **DISP-01**: Map with robot position, POIs, and path rendered as image and sent to Jackie touchscreen via WebSocket
-- [ ] **DISP-02**: Navigation status shown on touchscreen (navigating to X, arrived)
+- [x] **DISP-01**: Map with robot position, POIs, and path rendered as image and sent to Jackie touchscreen via WebSocket
+- [x] **DISP-02**: Navigation status shown on touchscreen (navigating to X, arrived)
 
 ### Setup & Deployment
 
