@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: phases
 status: planning
-stopped_at: Completed 09-01-PLAN.md (chassis contracts — RED phase)
-last_updated: "2026-03-14T06:53:58.560Z"
+stopped_at: Completed 09-02-PLAN.md (ChassisClient implementation — GREEN phase)
+last_updated: "2026-03-14T06:59:51.637Z"
 last_activity: 2026-03-13 — Roadmap rewritten with HOME/LAB split (phases 9-14)
 progress:
   total_phases: 14
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 17
-  completed_plans: 14
+  completed_plans: 15
 ---
 
 # Project State
@@ -62,6 +62,8 @@ Last activity: 2026-03-13 — Roadmap rewritten with HOME/LAB split (phases 9-14
 - [v2.0]: WIE-03 stays in Phase 14 (on-site) — requires physical presence at Student Union
 - [Phase 09]: Deferred ChassisClient import in tests (try/except) to allow pytest collection in RED state
 - [Phase 09]: Used websockets 16.0 asyncio serve API with port=0 for random OS-assigned test ports
+- [Phase 09]: Dual fragment handling: rosbridge op=fragment AND raw partial-JSON buffer for two-frame split messages
+- [Phase 09]: event_bus property exposed publicly on ChassisClient (client.event_bus) as tests access it directly
 
 ### Pending Todos
 
@@ -78,7 +80,7 @@ Last activity: 2026-03-13 — Roadmap rewritten with HOME/LAB split (phases 9-14
 
 ## Session Continuity
 
-Last session: 2026-03-14T06:53:58.557Z
-Stopped at: Completed 09-01-PLAN.md (chassis contracts — RED phase)
+Last session: 2026-03-14T06:59:51.635Z
+Stopped at: Completed 09-02-PLAN.md (ChassisClient implementation — GREEN phase)
 Resume file: None
 Next step: `/gsd:plan-phase 9`

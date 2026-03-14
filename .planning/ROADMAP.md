@@ -29,7 +29,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 8: Full Integration & Quality** - End-to-end conversation loop, latency tuning, 80% coverage
 
 ### v2.0 phases — Navigation & Wayfinding (HOME phases first):
-- [ ] **Phase 9: Chassis WebSocket Client (HOME)** - Full client with mock chassis server, pose/nav/state subscriptions, auto-reconnect, 100% unit tested
+- [x] **Phase 9: Chassis WebSocket Client (HOME)** - Full client with mock chassis server, pose/nav/state subscriptions, auto-reconnect, 100% unit tested (completed 2026-03-14)
 - [ ] **Phase 10: Map, POI, and Navigation Server Code (HOME)** - Map retrieval and rendering, POI knowledge base, nav commands — all mocked for home testing
 - [ ] **Phase 11: Wayfinding LLM Tools and Display Rendering (HOME)** - LLM function-calling tools, PIL map rendering with overlays, display dispatch
 - [ ] **Phase 12: Android App Rebuild and WiE Theme (HOME)** - Complete Jetpack Compose rewrite, all screens, JSON theme system, WiE branding and event config
@@ -197,7 +197,7 @@ Plans:
   5. Global robot state (battery, velocity, control_state) is retrievable via a single call to the mock chassis
   6. Soft e-stop sends the correct chassis protocol message and the client retries with exponential backoff on mock disconnect
 
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] 09-01-PLAN.md — Contracts: ChassisConfig, EventType members, MockChassisServer fixture, failing test suite
@@ -297,7 +297,7 @@ Plans:
 | 6. Android Audio Pipeline | HOME+LAB | 2/3 | Gap closure pending | 2026-03-10 |
 | 7. GPU Validation & Model Loading | LAB | 0/2 | Not started | - |
 | 8. Full Integration & Quality | LAB | 0/3 | Not started | - |
-| 9. Chassis WebSocket Client (HOME) | 1/2 | In Progress|  | - |
+| 9. Chassis WebSocket Client (HOME) | 2/2 | Complete   | 2026-03-14 | - |
 | 10. Map, POI, and Navigation Server Code (HOME) | HOME | 0/? | Not started | - |
 | 11. Wayfinding LLM Tools and Display Rendering (HOME) | HOME | 0/? | Not started | - |
 | 12. Android App Rebuild and WiE Theme (HOME) | HOME | 0/? | Not started | - |
