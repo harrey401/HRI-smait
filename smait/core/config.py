@@ -145,6 +145,8 @@ class NavigationConfig:
     arrow_color: str = "red"
     path_color: str = "blue"
     arrow_length_px: int = 15
+    highlight_color: str = "yellow"
+    highlight_radius_px: int = 12
 
 
 @dataclass
