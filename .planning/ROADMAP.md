@@ -258,7 +258,14 @@ Plans:
   6. Facilities/wayfinding screen lists POIs from the server's knowledge base and a "Take me there" tap triggers the navigate_to flow
   7. Event info screen shows schedule, speakers, and venue map loaded from the JSON config — WiE 2026 content populated
 
-**Plans**: TBD
+**Plans:** 5 plans
+
+Plans:
+- [ ] 12-01-PLAN.md — Build system migration to Compose + Kotlin, theme system, data models, WiE 2026 JSON config
+- [ ] 12-02-PLAN.md — WebSocket repository with SharedFlow events, navigation scaffold, MainActivity Compose migration
+- [ ] 12-03-PLAN.md — Home screen card grid with WiE cards, Event Info screen with schedule/speakers
+- [ ] 12-04-PLAN.md — Conversation screen: chat bubbles, Lottie robot avatar, selfie capture, feedback dialog
+- [ ] 12-05-PLAN.md — Navigation Map screen with live map display, Facilities screen with searchable POI list
 
 ### Phase 13: Lab Integration and Robot Verification (LAB)
 **Goal**: Phases 9-12 are connected to the real chassis and Jackie's touchscreen — the wayfinding system works on actual hardware
@@ -310,8 +317,8 @@ Plans:
 | 7. GPU Validation & Model Loading | LAB | 0/2 | Not started | - |
 | 8. Full Integration & Quality | LAB | 0/3 | Not started | - |
 | 9. Chassis WebSocket Client (HOME) | HOME | 2/2 | Complete | 2026-03-14 |
-| 10. Map, POI, and Navigation Server Code (HOME) | 5/5 | Complete    | 2026-03-14 | - |
-| 11. Wayfinding LLM Tools and Display Rendering (HOME) | 3/3 | Complete    | 2026-03-14 | - |
-| 12. Android App Rebuild and WiE Theme (HOME) | HOME | 0/? | Not started | - |
+| 10. Map, POI, and Navigation Server Code (HOME) | HOME | 5/5 | Complete | 2026-03-14 |
+| 11. Wayfinding LLM Tools and Display Rendering (HOME) | HOME | 3/3 | Complete | 2026-03-14 |
+| 12. Android App Rebuild and WiE Theme (HOME) | HOME | 0/5 | Planned | - |
 | 13. Lab Integration and Robot Verification (LAB) | LAB | 0/? | Not started | - |
 | 14. WiE On-Site Deployment (LAB/on-site) | LAB/on-site | 0/? | Not started | - |
