@@ -127,7 +127,7 @@ Requirements for milestone v2.0. Continues from v1.0 phases.
 - [x] **APP-02**: Base design system with theming support (colors, fonts, logos swappable per event)
 - [x] **APP-03**: Home screen with event-customizable cards (Guided Tour, Ask Me Anything, Facilities, etc.)
 - [x] **APP-04**: Navigation screen showing live map, robot position, path, and destination
-- [ ] **APP-05**: Conversation UI with transcript display, mic indicator, and robot avatar
+- [x] **APP-05**: Conversation UI with transcript display, mic indicator, and robot avatar
 - [x] **APP-06**: Facilities/wayfinding screen — searchable list of POIs with "take me there" action
 - [x] **APP-07**: Event info screen (schedule, speakers, venue map) — content loaded from config
 - [x] **APP-08**: All existing audio/video/TTS WebSocket streams preserved in new app architecture

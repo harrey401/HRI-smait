@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: phases
 status: planning
-stopped_at: Completed 12-03-PLAN.md (Home screen and Event Info screen)
-last_updated: "2026-03-14T21:51:12.595Z"
+stopped_at: Completed 12-04-PLAN.md (Conversation Screen with chat, avatar, selfie, feedback, audio/video pipeline)
+last_updated: "2026-03-14T21:51:19.263Z"
 last_activity: 2026-03-13 — Roadmap rewritten with HOME/LAB split (phases 9-14)
 progress:
   total_phases: 14
@@ -89,6 +89,7 @@ Last activity: 2026-03-13 — Roadmap rewritten with HOME/LAB split (phases 9-14
 - [Phase 12]: Inject optional CoroutineScope to HomeViewModel/EventInfoViewModel for testability without Dispatchers.setMain
 - [Phase 12]: CardAction sealed class with NavigateToTab and ShowInlineContent for JSON-driven card routing
 - [Phase 12]: CaeAudioManager.setWriterCallback() added for DI-style audio routing; writer callback takes priority over direct WebSocket for backward compatibility
+- [Phase 12]: ConversationViewModel is plain class with injectable CoroutineScope (not AndroidViewModel) — enables TestScope for silence timeout tests; instantiated via remember in AppNavigation
 
 ### Pending Todos
 
@@ -105,7 +106,7 @@ Last activity: 2026-03-13 — Roadmap rewritten with HOME/LAB split (phases 9-14
 
 ## Session Continuity
 
-Last session: 2026-03-14T21:49:38.567Z
-Stopped at: Completed 12-03-PLAN.md (Home screen and Event Info screen)
+Last session: 2026-03-14T21:51:19.260Z
+Stopped at: Completed 12-04-PLAN.md (Conversation Screen with chat, avatar, selfie, feedback, audio/video pipeline)
 Resume file: None
 Next step: `/gsd:plan-phase 9`

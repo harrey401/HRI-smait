@@ -32,7 +32,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 9: Chassis WebSocket Client (HOME)** - Full client with mock chassis server, pose/nav/state subscriptions, auto-reconnect, 100% unit tested (completed 2026-03-14)
 - [x] **Phase 10: Map, POI, and Navigation Server Code (HOME)** - Map retrieval and rendering, POI knowledge base, nav commands — all mocked for home testing (completed 2026-03-14)
 - [x] **Phase 11: Wayfinding LLM Tools and Display Rendering (HOME)** - LLM function-calling tools, PIL map rendering with overlays, display dispatch (completed 2026-03-14)
-- [ ] **Phase 12: Android App Rebuild and WiE Theme (HOME)** - Complete Jetpack Compose rewrite, all screens, JSON theme system, WiE branding and event config
+- [x] **Phase 12: Android App Rebuild and WiE Theme (HOME)** - Complete Jetpack Compose rewrite, all screens, JSON theme system, WiE branding and event config (completed 2026-03-14)
 - [ ] **Phase 13: Lab Integration and Robot Verification (LAB)** - Connect phases 9-11 to real chassis, verify map/nav/wayfinding end-to-end on Jackie
 - [ ] **Phase 14: WiE On-Site Deployment (LAB/on-site)** - Deploy app to Jackie touchscreen, map Student Union, label WiE POIs, run full demo
 
@@ -258,7 +258,7 @@ Plans:
   6. Facilities/wayfinding screen lists POIs from the server's knowledge base and a "Take me there" tap triggers the navigate_to flow
   7. Event info screen shows schedule, speakers, and venue map loaded from the JSON config — WiE 2026 content populated
 
-**Plans:** 4/5 plans executed
+**Plans:** 5/5 plans complete
 
 Plans:
 - [ ] 12-01-PLAN.md — Build system migration to Compose + Kotlin, theme system, data models, WiE 2026 JSON config
@@ -319,6 +319,6 @@ Plans:
 | 9. Chassis WebSocket Client (HOME) | HOME | 2/2 | Complete | 2026-03-14 |
 | 10. Map, POI, and Navigation Server Code (HOME) | HOME | 5/5 | Complete | 2026-03-14 |
 | 11. Wayfinding LLM Tools and Display Rendering (HOME) | HOME | 3/3 | Complete | 2026-03-14 |
-| 12. Android App Rebuild and WiE Theme (HOME) | 4/5 | In Progress|  | - |
+| 12. Android App Rebuild and WiE Theme (HOME) | 5/5 | Complete   | 2026-03-14 | - |
 | 13. Lab Integration and Robot Verification (LAB) | LAB | 0/? | Not started | - |
 | 14. WiE On-Site Deployment (LAB/on-site) | LAB/on-site | 0/? | Not started | - |
