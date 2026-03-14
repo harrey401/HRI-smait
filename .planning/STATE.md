@@ -4,7 +4,7 @@ milestone: v1.0
 milestone_name: phases
 status: planning
 stopped_at: Completed 10-05-PLAN.md (gap closure — switch_map protocol fix, event handler tests, coverage 90%)
-last_updated: "2026-03-14T09:29:10.926Z"
+last_updated: "2026-03-14T09:33:24.685Z"
 last_activity: 2026-03-13 — Roadmap rewritten with HOME/LAB split (phases 9-14)
 progress:
   total_phases: 14
