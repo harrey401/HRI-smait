@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: phases
 status: planning
-stopped_at: Completed 11-02-PLAN.md (display dispatch — FrameType.MAP_IMAGE, send_map_image, send_nav_status, DISPLAY_MAP/DISPLAY_NAV_STATUS EventBus subscriptions)
-last_updated: "2026-03-14T18:40:37.690Z"
+stopped_at: Completed 11-01-PLAN.md (WayfindingManager + MapManager highlight)
+last_updated: "2026-03-14T18:42:43.387Z"
 last_activity: 2026-03-13 — Roadmap rewritten with HOME/LAB split (phases 9-14)
 progress:
   total_phases: 14
   completed_phases: 7
   total_plans: 25
-  completed_plans: 21
+  completed_plans: 22
 ---
 
 # Project State
@@ -75,6 +75,8 @@ Last activity: 2026-03-13 — Roadmap rewritten with HOME/LAB split (phases 9-14
 - [Phase 10]: navigate_to falls back to original poi_name when resolve() returns None — chassis marker names bypass KB lookup
 - [Phase Phase 10]: switch_map calls /node_manager_control with cmd=7 (not /layered_map_cmd which is for listing)
 - [Phase 11]: _on_display_map guards empty png_bytes; _on_display_nav_status guards isinstance(data, dict); DISPLAY_MAP/NAV_STATUS added idempotently (Plan 01 had not run yet)
+- [Phase 11]: WayfindingManager owns DISPLAY_MAP and DISPLAY_NAV_STATUS emission (not MapManager or NavController)
+- [Phase 11]: MapManager._poi_positions cache populated via POI_LIST_UPDATED subscription in start() — avoids tight coupling with POIKnowledgeBase internals
 
 ### Pending Todos
 
@@ -91,7 +93,7 @@ Last activity: 2026-03-13 — Roadmap rewritten with HOME/LAB split (phases 9-14
 
 ## Session Continuity
 
-Last session: 2026-03-14T18:40:29.508Z
-Stopped at: Completed 11-02-PLAN.md (display dispatch — FrameType.MAP_IMAGE, send_map_image, send_nav_status, DISPLAY_MAP/DISPLAY_NAV_STATUS EventBus subscriptions)
+Last session: 2026-03-14T18:42:43.385Z
+Stopped at: Completed 11-01-PLAN.md (WayfindingManager + MapManager highlight)
 Resume file: None
 Next step: `/gsd:plan-phase 9`
