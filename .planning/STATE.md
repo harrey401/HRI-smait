@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: phases
 status: planning
-stopped_at: Completed 10-03-PLAN.md (POIKnowledgeBase GREEN — marker CRUD and name resolution)
-last_updated: "2026-03-14T07:52:36.706Z"
+stopped_at: Completed 10-02-PLAN.md (MapManager GREEN phase — decode, render, list, switch)
+last_updated: "2026-03-14T07:53:08.149Z"
 last_activity: 2026-03-13 — Roadmap rewritten with HOME/LAB split (phases 9-14)
 progress:
   total_phases: 14
   completed_phases: 6
   total_plans: 21
-  completed_plans: 17
+  completed_plans: 18
 ---
 
 # Project State
@@ -68,6 +68,9 @@ Last activity: 2026-03-13 — Roadmap rewritten with HOME/LAB split (phases 9-14
 - [Phase 10]: /global_path auto-subscribed in _setup_subscriptions; subscribe_topic is manual API for MapManager
 - [Phase 10]: Flat response shape {'waypoints': [...]} takes priority over nested in fetch_markers for protocol compatibility
 - [Phase 10]: isinstance(result, dict) guard in fetch_markers for AsyncMock safety and real-world error resilience
+- [Phase 10]: decode_map_png dual-format: flat dict for tests, nested rosbridge msg for real chassis
+- [Phase 10]: render_map returns placeholder grey PNG when no map loaded — prevents callers from getting None
+- [Phase 10]: switch_map calls /layered_map_cmd with cmd=7 (matches test assertion and real protocol)
 
 ### Pending Todos
 
@@ -84,7 +87,7 @@ Last activity: 2026-03-13 — Roadmap rewritten with HOME/LAB split (phases 9-14
 
 ## Session Continuity
 
-Last session: 2026-03-14T07:52:36.704Z
-Stopped at: Completed 10-03-PLAN.md (POIKnowledgeBase GREEN — marker CRUD and name resolution)
+Last session: 2026-03-14T07:53:08.147Z
+Stopped at: Completed 10-02-PLAN.md (MapManager GREEN phase — decode, render, list, switch)
 Resume file: None
 Next step: `/gsd:plan-phase 9`
