@@ -203,3 +203,156 @@ async def test_startup_auto_detect():
     assert any(
         e and e.get("building") == "tefa" for e in emitted_events
     ), f"Expected MAP_ACTIVE_FLOOR event, got: {emitted_events}"
+
+
+def test_on_map_update_emits_rendered_png():
+    """MAP-01: _on_map_update decodes flat-format PNG and emits MAP_RENDERED with valid PNG bytes."""
+    config = Config()
+    bus = EventBus()
+    chassis = make_chassis(config, bus)
+    manager = MapManager(config, bus, chassis)
+
+    # Subscribe handlers directly (bypasses start() which calls async subscribe_topic)
+    bus.subscribe(EventType.CHASSIS_MAP_UPDATE, manager._on_map_update)
+
+    rendered_events: list = []
+
+    def capture(data):
+        rendered_events.append(data)
+
+    bus.subscribe(EventType.MAP_RENDERED, capture)
+
+    png_b64 = make_test_map_png_b64(10, 10)
+    bus.emit(
+        EventType.CHASSIS_MAP_UPDATE,
+        {
+            "data": png_b64,
+            "origin_x": -5.0,
+            "origin_y": -5.0,
+            "resolution": 0.05,
+            "width": 10,
+            "height": 10,
+        },
+    )
+
+    assert len(rendered_events) == 1
+    png_out = rendered_events[0]
+    assert isinstance(png_out, bytes)
+    assert png_out[:4] == b"\x89PNG"
+    assert manager._map_image is not None
+
+
+def test_on_map_update_rosbridge_nested_format():
+    """MAP-01: _on_map_update handles nested rosbridge op:png format and sets correct metadata."""
+    config = Config()
+    bus = EventBus()
+    chassis = make_chassis(config, bus)
+    manager = MapManager(config, bus, chassis)
+
+    # Subscribe handlers directly
+    bus.subscribe(EventType.CHASSIS_MAP_UPDATE, manager._on_map_update)
+
+    rendered_events: list = []
+
+    def capture(data):
+        rendered_events.append(data)
+
+    bus.subscribe(EventType.MAP_RENDERED, capture)
+
+    png_b64 = make_test_map_png_b64(10, 10)
+    bus.emit(
+        EventType.CHASSIS_MAP_UPDATE,
+        {
+            "msg": {
+                "data": png_b64,
+                "info": {
+                    "origin": {"position": {"x": -5.0, "y": -5.0}},
+                    "resolution": 0.05,
+                    "width": 10,
+                    "height": 10,
+                },
+            }
+        },
+    )
+
+    assert len(rendered_events) == 1
+    png_out = rendered_events[0]
+    assert isinstance(png_out, bytes)
+    assert png_out[:4] == b"\x89PNG"
+    assert manager._map_meta.get("origin_x") == -5.0
+    assert manager._map_meta.get("origin_y") == -5.0
+
+
+def test_on_pose_update_rerenders_when_map_loaded():
+    """MAP-04: _on_pose_update re-renders map when map is loaded, skips render when no map."""
+    config = Config()
+    bus = EventBus()
+    chassis = make_chassis(config, bus)
+    manager = MapManager(config, bus, chassis)
+
+    # Subscribe handlers directly
+    bus.subscribe(EventType.CHASSIS_POSE_UPDATE, manager._on_pose_update)
+
+    rendered_events: list = []
+
+    def capture(data):
+        rendered_events.append(data)
+
+    bus.subscribe(EventType.MAP_RENDERED, capture)
+
+    # Pose update WITHOUT a map loaded — should NOT emit MAP_RENDERED
+    bus.emit(EventType.CHASSIS_POSE_UPDATE, {"x": 1.0, "y": 2.0, "theta": 0.5})
+    assert len(rendered_events) == 0, "Expected no MAP_RENDERED when map is not loaded"
+
+    # Now load a map manually
+    png_b64 = make_test_map_png_b64(10, 10)
+    img = Image.open(io.BytesIO(base64.b64decode(png_b64))).convert("RGBA")
+    manager._map_image = img
+    manager._map_meta = {
+        "origin_x": -5.0,
+        "origin_y": -5.0,
+        "resolution": 0.05,
+        "width": 10,
+        "height": 10,
+    }
+
+    # Pose update WITH a map loaded — should emit MAP_RENDERED
+    bus.emit(EventType.CHASSIS_POSE_UPDATE, {"x": 1.0, "y": 2.0, "theta": 0.5})
+    assert len(rendered_events) == 1
+    assert manager._current_pose == {"x": 1.0, "y": 2.0, "theta": 0.5}
+
+
+def test_on_path_update_rerenders_when_map_loaded():
+    """MAP-04: _on_path_update re-renders map when map is loaded and stores path points."""
+    config = Config()
+    bus = EventBus()
+    chassis = make_chassis(config, bus)
+    manager = MapManager(config, bus, chassis)
+
+    # Subscribe handlers directly
+    bus.subscribe(EventType.CHASSIS_PATH_UPDATE, manager._on_path_update)
+
+    rendered_events: list = []
+
+    def capture(data):
+        rendered_events.append(data)
+
+    bus.subscribe(EventType.MAP_RENDERED, capture)
+
+    # Load a map manually
+    png_b64 = make_test_map_png_b64(10, 10)
+    img = Image.open(io.BytesIO(base64.b64decode(png_b64))).convert("RGBA")
+    manager._map_image = img
+    manager._map_meta = {
+        "origin_x": -5.0,
+        "origin_y": -5.0,
+        "resolution": 0.05,
+        "width": 10,
+        "height": 10,
+    }
+
+    path_points = [(1.0, 1.0), (2.0, 2.0)]
+    bus.emit(EventType.CHASSIS_PATH_UPDATE, {"points": path_points})
+
+    assert len(rendered_events) == 1
+    assert manager._path_points == path_points
