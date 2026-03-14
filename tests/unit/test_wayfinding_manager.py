@@ -1,24 +1,29 @@
-"""Tests for WayfindingManager — WAY-01 through WAY-04.
+"""Tests for WayfindingManager — WAY-01 through WAY-05.
 
-RED phase tests (Task 1) fail with NotImplementedError until Task 2 implements handlers.
+RED phase tests (Task 1 of Plan 01) fail with NotImplementedError until Task 2 implements handlers.
 Task 2 adds test_render_map_highlight_pixel (GREEN).
+Plan 03 Task 1 adds 5 new tests for DialogueManager tool-call loop and
+WayfindingManager NAV_ARRIVED/NAV_FAILED verbal handlers (RED).
+Plan 03 Task 2 implements those tests to GREEN.
 """
 
 from __future__ import annotations
 
 import base64
 import io
+import json
 import struct
 
 import pytest
 import pytest_asyncio
 from PIL import Image
-from unittest.mock import AsyncMock, MagicMock, call
+from unittest.mock import AsyncMock, MagicMock, patch, call
 
 from smait.core.config import Config
 from smait.core.events import EventBus, EventType
 from smait.navigation.wayfinding_manager import WayfindingManager, WAYFINDING_TOOLS
 from smait.navigation.map_manager import MapManager
+from smait.dialogue.manager import DialogueManager, DialogueResponse
 
 
 # ---------------------------------------------------------------------------
@@ -261,3 +266,204 @@ def test_render_map_highlight_pixel():
         f"Expected a non-grey pixel at (50, 50) indicating highlight circle was drawn, "
         f"got {pixel}"
     )
+
+
+# ---------------------------------------------------------------------------
+# Plan 03: DialogueManager tool registration and tool-call loop (WAY-05)
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def dialogue_config():
+    """Minimal Config for DialogueManager."""
+    return Config()
+
+
+@pytest.fixture
+def dialogue_event_bus():
+    """EventBus for DialogueManager tests."""
+    return EventBus()
+
+
+@pytest.fixture
+def dialogue_manager(dialogue_config, dialogue_event_bus):
+    """DialogueManager with mock OpenAI client."""
+    dm = DialogueManager(config=dialogue_config, event_bus=dialogue_event_bus)
+    return dm
+
+
+def test_dialogue_register_tools(dialogue_manager):
+    """WAY-05: register_tools() sets _tools and _tool_handlers on DialogueManager."""
+    tools = [{"type": "function", "function": {"name": "test_tool"}}]
+    handlers = {"test_tool": AsyncMock()}
+
+    dialogue_manager.register_tools(tools, handlers)
+
+    assert dialogue_manager._tools == tools
+    assert dialogue_manager._tool_handlers == handlers
+
+
+@pytest.mark.asyncio
+async def test_dialogue_tool_call_flow(dialogue_manager):
+    """WAY-05: When OpenAI returns tool_calls, DialogueManager executes the handler,
+    injects the tool result as a 'tool' role message, makes a second LLM call,
+    and returns the second response text as DialogueResponse.
+    """
+    # Set up a mock handler that returns a dict result
+    mock_handler = AsyncMock(return_value={"found": True, "poi_name": "eng192"})
+    tools = [{"type": "function", "function": {"name": "query_location"}}]
+    dialogue_manager.register_tools(tools, {"query_location": mock_handler})
+
+    # Build first response (has tool_calls)
+    first_tool_call = MagicMock()
+    first_tool_call.id = "call_123"
+    first_tool_call.type = "function"
+    first_tool_call.function.name = "query_location"
+    first_tool_call.function.arguments = json.dumps({"location_name": "ENG192"})
+    first_tool_call.model_dump.return_value = {
+        "id": "call_123", "type": "function",
+        "function": {"name": "query_location", "arguments": '{"location_name":"ENG192"}'}
+    }
+
+    first_message = MagicMock()
+    first_message.tool_calls = [first_tool_call]
+    first_message.content = None
+
+    first_choice = MagicMock()
+    first_choice.message = first_message
+    first_response = MagicMock()
+    first_response.choices = [first_choice]
+    first_response.usage = MagicMock()
+    first_response.usage.total_tokens = 50
+
+    # Build second response (text, no tool_calls)
+    second_message = MagicMock()
+    second_message.content = "ENG192 is on the third floor!"
+    second_message.tool_calls = None
+
+    second_choice = MagicMock()
+    second_choice.message = second_message
+    second_response = MagicMock()
+    second_response.choices = [second_choice]
+    second_response.usage = MagicMock()
+    second_response.usage.total_tokens = 30
+
+    # Wire mock OpenAI client with side_effect for 2 calls
+    mock_client = MagicMock()
+    mock_client.chat = MagicMock()
+    mock_client.chat.completions = MagicMock()
+    mock_client.chat.completions.create = AsyncMock(
+        side_effect=[first_response, second_response]
+    )
+    dialogue_manager._openai_client = mock_client
+
+    result = await dialogue_manager.ask("where is ENG192?")
+
+    # Handler must be called with correct parsed args
+    mock_handler.assert_called_once_with({"location_name": "ENG192"})
+
+    # OpenAI must be called twice (first: with tools; second: follow-up without tools)
+    assert mock_client.chat.completions.create.call_count == 2
+
+    # Returned response must contain the second-call text
+    assert isinstance(result, DialogueResponse)
+    assert result.text == "ENG192 is on the third floor!"
+
+
+@pytest.mark.asyncio
+async def test_dialogue_no_tools_passthrough(dialogue_manager):
+    """WAY-05: When no tools registered, _ask_api behaves identically to original
+    (no tools= param sent to OpenAI).
+    """
+    # No register_tools() called — _tools should default to []
+
+    # Build a plain text response
+    plain_message = MagicMock()
+    plain_message.content = "Hello there!"
+    plain_message.tool_calls = None
+
+    plain_choice = MagicMock()
+    plain_choice.message = plain_message
+    plain_response = MagicMock()
+    plain_response.choices = [plain_choice]
+    plain_response.usage = MagicMock()
+    plain_response.usage.total_tokens = 10
+
+    mock_client = MagicMock()
+    mock_client.chat = MagicMock()
+    mock_client.chat.completions = MagicMock()
+    mock_client.chat.completions.create = AsyncMock(return_value=plain_response)
+    dialogue_manager._openai_client = mock_client
+
+    # Disable Ollama so we go straight to API
+    dialogue_manager._config = MagicMock()
+    dialogue_manager._config.try_local_first = False
+    dialogue_manager._config.api_model = "gpt-4o-mini"
+    dialogue_manager._config.max_tokens = 256
+    dialogue_manager._config.temperature = 0.7
+    dialogue_manager._config.system_prompt = "You are Jackie."
+    dialogue_manager._config.max_history_turns = 10
+
+    result = await dialogue_manager.ask("hi")
+
+    # tools= must NOT be in the call kwargs
+    call_kwargs = mock_client.chat.completions.create.call_args.kwargs
+    assert "tools" not in call_kwargs, "tools= should not be sent when _tools is empty"
+    assert result.text == "Hello there!"
+
+
+# ---------------------------------------------------------------------------
+# Plan 03: WayfindingManager NAV_ARRIVED / NAV_FAILED verbal handlers (WAY-05)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_nav_arrived_verbal(wayfinding_manager, mock_event_bus):
+    """WAY-05: NAV_ARRIVED event triggers DIALOGUE_RESPONSE with 'arrived' text
+    and DISPLAY_NAV_STATUS with status=arrived.
+    """
+    dialogue_events: list = []
+    display_events: list = []
+
+    mock_event_bus.subscribe(EventType.DIALOGUE_RESPONSE, dialogue_events.append)
+    mock_event_bus.subscribe(EventType.DISPLAY_NAV_STATUS, display_events.append)
+
+    wayfinding_manager._on_nav_arrived({"destination": "ENG192"})
+
+    # DISPLAY_NAV_STATUS should fire
+    assert len(display_events) == 1
+    assert display_events[0]["status"] == "arrived"
+    assert display_events[0]["destination"] == "ENG192"
+
+    # DIALOGUE_RESPONSE should fire with a DialogueResponse
+    assert len(dialogue_events) == 1
+    response = dialogue_events[0]
+    assert isinstance(response, DialogueResponse)
+    assert "arrived" in response.text.lower()
+    assert "ENG192" in response.text
+
+
+@pytest.mark.asyncio
+async def test_nav_failed_verbal(wayfinding_manager, mock_event_bus):
+    """WAY-05: NAV_FAILED event triggers DIALOGUE_RESPONSE with 'wasn't able to reach' text
+    and DISPLAY_NAV_STATUS with status=failed.
+    """
+    dialogue_events: list = []
+    display_events: list = []
+
+    mock_event_bus.subscribe(EventType.DIALOGUE_RESPONSE, dialogue_events.append)
+    mock_event_bus.subscribe(EventType.DISPLAY_NAV_STATUS, display_events.append)
+
+    wayfinding_manager._on_nav_failed({"destination": "ENG192", "reason": "obstacle"})
+
+    # DISPLAY_NAV_STATUS should fire
+    assert len(display_events) == 1
+    assert display_events[0]["status"] == "failed"
+    assert display_events[0]["destination"] == "ENG192"
+
+    # DIALOGUE_RESPONSE should fire with 'wasn't able to reach' phrasing
+    assert len(dialogue_events) == 1
+    response = dialogue_events[0]
+    assert isinstance(response, DialogueResponse)
+    assert "wasn't able to reach" in response.text
+    assert "ENG192" in response.text
