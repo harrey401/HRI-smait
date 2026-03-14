@@ -319,6 +319,6 @@ Plans:
 | 9. Chassis WebSocket Client (HOME) | HOME | 2/2 | Complete | 2026-03-14 |
 | 10. Map, POI, and Navigation Server Code (HOME) | HOME | 5/5 | Complete | 2026-03-14 |
 | 11. Wayfinding LLM Tools and Display Rendering (HOME) | HOME | 3/3 | Complete | 2026-03-14 |
-| 12. Android App Rebuild and WiE Theme (HOME) | 5/5 | Complete   | 2026-03-14 | - |
+| 12. Android App Rebuild and WiE Theme (HOME) | 5/5 | Complete    | 2026-03-14 | - |
 | 13. Lab Integration and Robot Verification (LAB) | LAB | 0/? | Not started | - |
 | 14. WiE On-Site Deployment (LAB/on-site) | LAB/on-site | 0/? | Not started | - |

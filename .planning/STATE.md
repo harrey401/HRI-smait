@@ -4,7 +4,7 @@ milestone: v1.0
 milestone_name: phases
 status: planning
 stopped_at: Completed 12-04-PLAN.md (Conversation Screen with chat, avatar, selfie, feedback, audio/video pipeline)
-last_updated: "2026-03-14T21:51:19.263Z"
+last_updated: "2026-03-14T21:56:46.291Z"
 last_activity: 2026-03-13 — Roadmap rewritten with HOME/LAB split (phases 9-14)
 progress:
   total_phases: 14
