@@ -70,6 +70,19 @@ class EventType(Enum):
     CHASSIS_CONNECTED = auto()        # data: None
     CHASSIS_DISCONNECTED = auto()     # data: None
 
+    # Map / Navigation (Phase 10)
+    CHASSIS_MAP_UPDATE = auto()       # data: raw msg dict from op:png response
+    CHASSIS_PATH_UPDATE = auto()      # data: {"points": list[tuple[float, float]]}
+    MAP_RENDERED = auto()             # data: bytes (PNG)
+    MAP_ACTIVE_FLOOR = auto()         # data: {"building": str, "floor": str}
+    MAP_LIST_UPDATED = auto()         # data: {"list_info": list[dict]}
+    NAV_STARTED = auto()              # data: {"destination": str}
+    NAV_ARRIVED = auto()              # data: {"destination": str}
+    NAV_FAILED = auto()               # data: {"reason": str, "destination": str}
+    NAV_CANCELLED = auto()            # data: None
+    POI_LIST_UPDATED = auto()         # data: {"markers": list[dict]}
+    POI_CONFIG_MISSING = auto()       # data: {"building": str, "floor": str}
+
 
 class EventBus:
     """Async pub/sub. Supports both coroutine and sync handlers."""

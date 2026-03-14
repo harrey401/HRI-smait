@@ -200,8 +200,8 @@ Plans:
 **Plans:** 2/2 plans complete
 
 Plans:
-- [ ] 09-01-PLAN.md — Contracts: ChassisConfig, EventType members, MockChassisServer fixture, failing test suite
-- [ ] 09-02-PLAN.md — Implementation: ChassisClient with connection, subscriptions, message routing, soft e-stop, reconnect
+- [x] 09-01-PLAN.md — Contracts: ChassisConfig, EventType members, MockChassisServer fixture, failing test suite
+- [x] 09-02-PLAN.md — Implementation: ChassisClient with connection, subscriptions, message routing, soft e-stop, reconnect
 
 ### Phase 10: Map, POI, and Navigation Server Code (HOME)
 **Goal**: All server-side spatial data code is implemented and unit-tested with sample map data — no real chassis required
@@ -216,7 +216,13 @@ Plans:
   5. Path subscription delivers waypoints from the mock chassis and the rendered map image shows the planned path as an overlay
   6. On startup, the server reads available maps from the chassis, selects the active floor, and loads the matching POI JSON config file automatically
 
-**Plans**: TBD
+**Plans:** 4 plans
+
+Plans:
+- [ ] 10-01-PLAN.md — Core infrastructure: EventTypes, NavigationConfig, ChassisClient extensions, module skeletons, RED test suites
+- [ ] 10-02-PLAN.md — MapManager TDD: map PNG decode, world-to-pixel transform, rendering, list/switch maps
+- [ ] 10-03-PLAN.md — POIKnowledgeBase TDD: marker CRUD, human-name resolution, JSON config loading
+- [ ] 10-04-PLAN.md — NavController TDD: nav commands, status monitoring, distance calc, startup wiring, SETUP docs
 
 ### Phase 11: Wayfinding LLM Tools and Display Rendering (HOME)
 **Goal**: Users can ask Jackie "where is X?" or "take me to X" in code — LLM tools, verbal responses, and map rendering all work with mock data
@@ -297,8 +303,8 @@ Plans:
 | 6. Android Audio Pipeline | HOME+LAB | 2/3 | Gap closure pending | 2026-03-10 |
 | 7. GPU Validation & Model Loading | LAB | 0/2 | Not started | - |
 | 8. Full Integration & Quality | LAB | 0/3 | Not started | - |
-| 9. Chassis WebSocket Client (HOME) | 2/2 | Complete   | 2026-03-14 | - |
-| 10. Map, POI, and Navigation Server Code (HOME) | HOME | 0/? | Not started | - |
+| 9. Chassis WebSocket Client (HOME) | HOME | 2/2 | Complete | 2026-03-14 |
+| 10. Map, POI, and Navigation Server Code (HOME) | HOME | 0/4 | Not started | - |
 | 11. Wayfinding LLM Tools and Display Rendering (HOME) | HOME | 0/? | Not started | - |
 | 12. Android App Rebuild and WiE Theme (HOME) | HOME | 0/? | Not started | - |
 | 13. Lab Integration and Robot Verification (LAB) | LAB | 0/? | Not started | - |

@@ -47,6 +47,7 @@ class ChassisClient:
 
     def __init__(self, config: Config, event_bus: EventBus) -> None:
         self._cfg = config.chassis
+        self._nav_cfg = config.navigation
         self._bus = event_bus
         self._running: bool = False
         self._connected: asyncio.Event = asyncio.Event()
@@ -149,12 +150,13 @@ class ChassisClient:
     # ------------------------------------------------------------------
 
     async def _setup_subscriptions(self, ws) -> None:
-        """Send subscribe ops for all 4 chassis topics."""
+        """Send subscribe ops for all chassis topics."""
         subscriptions = [
             (self._cfg.pose_topic, "geometry_msgs/Pose2D"),
             (self._cfg.status_topic, "yutong_assistance/RobotStatus"),
             (self._cfg.nav_status_topic, "actionlib_msgs/GoalStatus"),
             (self._cfg.obstacle_topic, "std_msgs/Int8"),
+            (self._nav_cfg.path_topic, "yutong_assistance/point_array"),
         ]
         for topic, msg_type in subscriptions:
             op = {
@@ -190,6 +192,8 @@ class ChassisClient:
             self._handle_publish(msg)
         elif op == "service_response":
             self._handle_service_response(msg)
+        elif op == "png":
+            self._handle_png(msg)
         else:
             logger.debug("ChassisClient: unhandled op=%r", op)
 
@@ -225,6 +229,10 @@ class ChassisClient:
             self._bus.emit(EventType.CHASSIS_OBSTACLE, {
                 "region": data.get("data", 0),
             })
+
+        elif topic == self._nav_cfg.path_topic:
+            points = list(zip(data.get("px", []), data.get("py", [])))
+            self._bus.emit(EventType.CHASSIS_PATH_UPDATE, {"points": points})
 
         else:
             logger.debug("ChassisClient: unhandled publish topic=%r", topic)
@@ -342,3 +350,104 @@ class ChassisClient:
         except asyncio.TimeoutError:
             self._pending_calls.pop(call_id, None)
             raise
+
+    def _handle_png(self, msg: dict) -> None:
+        """Handle op:png messages — emit CHASSIS_MAP_UPDATE with raw msg dict."""
+        self._bus.emit(EventType.CHASSIS_MAP_UPDATE, msg)
+
+    async def subscribe_topic(
+        self,
+        topic: str,
+        msg_type: str,
+        **kwargs: Any,
+    ) -> None:
+        """Send a subscribe op for a topic, with optional extra fields.
+
+        Unlike _setup_subscriptions, this is called manually by MapManager
+        (e.g., for the map topic with compression/fragment_size options).
+
+        Args:
+            topic: ROS topic name.
+            msg_type: ROS message type string.
+            **kwargs: Optional extra fields (e.g., compression, fragment_size).
+
+        Raises:
+            RuntimeError: If not currently connected to the chassis.
+        """
+        if not self._connected.is_set() or self._ws is None:
+            raise RuntimeError("ChassisClient: cannot subscribe_topic — not connected")
+
+        op: dict[str, Any] = {
+            "op": "subscribe",
+            "id": self._next_id(),
+            "topic": topic,
+            "type": msg_type,
+        }
+        op.update(kwargs)
+        await self._ws.send(json.dumps(op))
+
+    async def send_cancel_navigation(self) -> None:
+        """Send a cancel navigation command to the chassis.
+
+        Sends an advertise op followed by a publish op for the cancel_nav_topic.
+
+        Raises:
+            RuntimeError: If not currently connected to the chassis.
+        """
+        if not self._connected.is_set() or self._ws is None:
+            raise RuntimeError("ChassisClient: cannot send_cancel_navigation — not connected")
+
+        topic = self._nav_cfg.cancel_nav_topic
+
+        advertise_op = {
+            "op": "advertise",
+            "id": self._next_id(),
+            "topic": topic,
+            "type": "actionlib_msgs/GoalID",
+        }
+        await self._ws.send(json.dumps(advertise_op))
+
+        publish_op = {
+            "op": "publish",
+            "id": self._next_id(),
+            "topic": topic,
+            "msg": {"stamp": "", "id": ""},
+        }
+        await self._ws.send(json.dumps(publish_op))
+
+    async def send_insert_marker(self, name: str) -> None:
+        """Insert a named POI marker at the current robot pose.
+
+        Sends an advertise op followed by a publish op for the insert_marker_topic.
+
+        Args:
+            name: POI marker name to insert.
+
+        Raises:
+            RuntimeError: If not currently connected to the chassis.
+        """
+        if not self._connected.is_set() or self._ws is None:
+            raise RuntimeError("ChassisClient: cannot send_insert_marker — not connected")
+
+        topic = self._nav_cfg.insert_marker_topic
+
+        advertise_op = {
+            "op": "advertise",
+            "id": self._next_id(),
+            "topic": topic,
+            "type": "yutong_assistance/poi_msgs",
+        }
+        await self._ws.send(json.dumps(advertise_op))
+
+        publish_op = {
+            "op": "publish",
+            "id": self._next_id(),
+            "topic": topic,
+            "msg": {
+                "name": name,
+                "behavior_code": 0,
+                "time_out": 0,
+                "rest_time": 0,
+            },
+        }
+        await self._ws.send(json.dumps(publish_op))

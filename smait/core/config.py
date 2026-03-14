@@ -134,6 +134,20 @@ class ChassisConfig:
 
 
 @dataclass
+class NavigationConfig:
+    poi_config_dir: str = "data/poi"
+    map_fragment_size: int = 6000
+    map_throttle_rate_ms: int = 500
+    path_topic: str = "/global_path"
+    map_topic: str = "/map"
+    insert_marker_topic: str = "/insert_current_pose_marker"
+    cancel_nav_topic: str = "/move_base/cancel"
+    arrow_color: str = "red"
+    path_color: str = "blue"
+    arrow_length_px: int = 15
+
+
+@dataclass
 class Config:
     connection: ConnectionConfig = field(default_factory=ConnectionConfig)
     audio: AudioConfig = field(default_factory=AudioConfig)
@@ -148,6 +162,7 @@ class Config:
     session: SessionConfig = field(default_factory=SessionConfig)
     logging: LogConfig = field(default_factory=LogConfig)
     chassis: ChassisConfig = field(default_factory=ChassisConfig)
+    navigation: NavigationConfig = field(default_factory=NavigationConfig)
     debug: bool = False
     show_video: bool = True
 
