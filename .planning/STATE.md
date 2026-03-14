@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: phases
 status: planning
-stopped_at: Completed 11-01-PLAN.md (WayfindingManager + MapManager highlight)
-last_updated: "2026-03-14T18:42:43.387Z"
+stopped_at: Completed 11-03-PLAN.md (DialogueManager tool-call loop + nav verbal handlers)
+last_updated: "2026-03-14T18:48:49.341Z"
 last_activity: 2026-03-13 — Roadmap rewritten with HOME/LAB split (phases 9-14)
 progress:
   total_phases: 14
-  completed_phases: 7
+  completed_phases: 8
   total_plans: 25
-  completed_plans: 22
+  completed_plans: 23
 ---
 
 # Project State
@@ -77,6 +77,9 @@ Last activity: 2026-03-13 — Roadmap rewritten with HOME/LAB split (phases 9-14
 - [Phase 11]: _on_display_map guards empty png_bytes; _on_display_nav_status guards isinstance(data, dict); DISPLAY_MAP/NAV_STATUS added idempotently (Plan 01 had not run yet)
 - [Phase 11]: WayfindingManager owns DISPLAY_MAP and DISPLAY_NAV_STATUS emission (not MapManager or NavController)
 - [Phase 11]: MapManager._poi_positions cache populated via POI_LIST_UPDATED subscription in start() — avoids tight coupling with POIKnowledgeBase internals
+- [Phase 11]: Ollama path does NOT receive tools= parameter — local LLMs have unreliable tool-calling
+- [Phase 11]: WayfindingManager subscribes to NAV_ARRIVED/NAV_FAILED in __init__ for verbal arrival/failure confirmations
+- [Phase 11]: DIALOGUE_RESPONSE emitted by WayfindingManager with model_used=wayfinding to distinguish from LLM responses
 
 ### Pending Todos
 
@@ -93,7 +96,7 @@ Last activity: 2026-03-13 — Roadmap rewritten with HOME/LAB split (phases 9-14
 
 ## Session Continuity
 
-Last session: 2026-03-14T18:42:43.385Z
-Stopped at: Completed 11-01-PLAN.md (WayfindingManager + MapManager highlight)
+Last session: 2026-03-14T18:48:49.339Z
+Stopped at: Completed 11-03-PLAN.md (DialogueManager tool-call loop + nav verbal handlers)
 Resume file: None
 Next step: `/gsd:plan-phase 9`

@@ -31,7 +31,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 ### v2.0 phases — Navigation & Wayfinding (HOME phases first):
 - [x] **Phase 9: Chassis WebSocket Client (HOME)** - Full client with mock chassis server, pose/nav/state subscriptions, auto-reconnect, 100% unit tested (completed 2026-03-14)
 - [x] **Phase 10: Map, POI, and Navigation Server Code (HOME)** - Map retrieval and rendering, POI knowledge base, nav commands — all mocked for home testing (completed 2026-03-14)
-- [ ] **Phase 11: Wayfinding LLM Tools and Display Rendering (HOME)** - LLM function-calling tools, PIL map rendering with overlays, display dispatch
+- [x] **Phase 11: Wayfinding LLM Tools and Display Rendering (HOME)** - LLM function-calling tools, PIL map rendering with overlays, display dispatch (completed 2026-03-14)
 - [ ] **Phase 12: Android App Rebuild and WiE Theme (HOME)** - Complete Jetpack Compose rewrite, all screens, JSON theme system, WiE branding and event config
 - [ ] **Phase 13: Lab Integration and Robot Verification (LAB)** - Connect phases 9-11 to real chassis, verify map/nav/wayfinding end-to-end on Jackie
 - [ ] **Phase 14: WiE On-Site Deployment (LAB/on-site)** - Deploy app to Jackie touchscreen, map Student Union, label WiE POIs, run full demo
@@ -237,7 +237,7 @@ Plans:
   4. When `navigate_to` fires, the robot emits a verbal status update (e.g., "On my way to ENG192") and the display updates to show navigating status — both verified with mock chassis and mock LLM
   5. When the mock chassis emits navigation_success or navigation_failed, the verbal response and display update are triggered correctly
 
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] 11-01-PLAN.md — WayfindingManager TDD: tool definitions, query_location/navigate_to handlers, MapManager highlight rendering
@@ -311,7 +311,7 @@ Plans:
 | 8. Full Integration & Quality | LAB | 0/3 | Not started | - |
 | 9. Chassis WebSocket Client (HOME) | HOME | 2/2 | Complete | 2026-03-14 |
 | 10. Map, POI, and Navigation Server Code (HOME) | 5/5 | Complete    | 2026-03-14 | - |
-| 11. Wayfinding LLM Tools and Display Rendering (HOME) | 2/3 | In Progress|  | - |
+| 11. Wayfinding LLM Tools and Display Rendering (HOME) | 3/3 | Complete   | 2026-03-14 | - |
 | 12. Android App Rebuild and WiE Theme (HOME) | HOME | 0/? | Not started | - |
 | 13. Lab Integration and Robot Verification (LAB) | LAB | 0/? | Not started | - |
 | 14. WiE On-Site Deployment (LAB/on-site) | LAB/on-site | 0/? | Not started | - |

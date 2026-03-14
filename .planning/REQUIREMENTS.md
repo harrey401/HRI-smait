@@ -108,7 +108,7 @@ Requirements for milestone v2.0. Continues from v1.0 phases.
 - [x] **WAY-02**: LLM has tool/function for initiating navigation ("take me to X")
 - [x] **WAY-03**: When user asks "where is X?", system shows map with highlighted path on touchscreen + gives verbal directions
 - [x] **WAY-04**: When user says "take me to X", robot navigates and converses during transit
-- [ ] **WAY-05**: Robot verbally confirms arrival or explains navigation failure
+- [x] **WAY-05**: Robot verbally confirms arrival or explains navigation failure
 
 ### Display & UI
 
