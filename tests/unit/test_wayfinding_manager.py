@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import base64
 import io
+import struct
 
 import pytest
 import pytest_asyncio
@@ -17,6 +18,7 @@ from unittest.mock import AsyncMock, MagicMock, call
 from smait.core.config import Config
 from smait.core.events import EventBus, EventType
 from smait.navigation.wayfinding_manager import WayfindingManager, WAYFINDING_TOOLS
+from smait.navigation.map_manager import MapManager
 
 
 # ---------------------------------------------------------------------------
@@ -207,3 +209,55 @@ async def test_navigate_to_dispatches_status(wayfinding_manager, mock_event_bus,
     event_data = captured_events[0]
     assert event_data["status"] == "navigating"
     assert event_data["destination"] == "eng192"
+
+
+# ---------------------------------------------------------------------------
+# WAY-03: MapManager.render_map_with_highlight draws circle at POI pixel
+# ---------------------------------------------------------------------------
+
+
+def test_render_map_highlight_pixel():
+    """WAY-03: render_map_with_highlight draws a non-grey pixel at the POI location.
+
+    Uses a 100x100 grey synthetic map with unit metadata so that world coords
+    map 1:1 to pixels. POI at world (50, 50) should land at pixel (50, 50)
+    in the image and be rendered with a yellow highlight circle.
+    """
+    # Create a synthetic 100x100 grey map image
+    config = Config()
+    bus = EventBus()
+    chassis_mock = MagicMock()
+    chassis_mock.subscribe_topic = AsyncMock()
+    chassis_mock.call_service = AsyncMock()
+    manager = MapManager(config, bus, chassis_mock)
+
+    # Load a synthetic grey map directly
+    grey_img = Image.new("RGBA", (100, 100), color=(200, 200, 200, 255))
+    manager._map_image = grey_img
+    manager._map_meta = {
+        "origin_x": 0.0,
+        "origin_y": 0.0,
+        "resolution": 1.0,
+        "width": 100,
+        "height": 100,
+    }
+
+    # Place POI at world coords (50, 50) — should map to pixel (50, 50)
+    # With origin=(0,0), resolution=1.0, height=100:
+    #   col = (50 - 0) / 1.0 = 50
+    #   row = 100 - (50 - 0) / 1.0 = 50
+    manager._poi_positions["eng192"] = {"x": 50.0, "y": 50.0}
+
+    png_bytes = manager.render_map_with_highlight("eng192")
+
+    assert isinstance(png_bytes, bytes)
+    assert png_bytes[:4] == b"\x89PNG"
+
+    # Decode the PNG and check the pixel at (50, 50) is not grey
+    result_img = Image.open(io.BytesIO(png_bytes)).convert("RGBA")
+    pixel = result_img.getpixel((50, 50))
+    grey_pixel = (200, 200, 200, 255)
+    assert pixel != grey_pixel, (
+        f"Expected a non-grey pixel at (50, 50) indicating highlight circle was drawn, "
+        f"got {pixel}"
+    )

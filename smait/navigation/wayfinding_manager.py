@@ -118,7 +118,32 @@ class WayfindingManager:
         Returns:
             Dict with "found" bool, optional "poi_name", and "verbal" response.
         """
-        raise NotImplementedError
+        location_name = args.get("location_name", "")
+        poi_name = self._poi_kb.resolve(location_name)
+
+        if poi_name is None:
+            known = self._poi_kb.list_locations()
+            known_str = ", ".join(known[:5]) if known else "none"
+            return {
+                "found": False,
+                "verbal": (
+                    f"I don't know where {location_name} is. "
+                    f"I know about: {known_str}."
+                ),
+            }
+
+        # Render map with highlight and dispatch DISPLAY_MAP event
+        png_bytes = self._map.render_map_with_highlight(poi_name)
+        self._bus.emit(
+            EventType.DISPLAY_MAP,
+            {"png": png_bytes, "highlighted_poi": poi_name},
+        )
+
+        return {
+            "found": True,
+            "poi_name": poi_name,
+            "verbal": f"I found {location_name} on the map!",
+        }
 
     async def _handle_navigate_to(self, args: dict) -> dict:
         """Handle navigate_to tool call — start navigation and dispatch status.
@@ -129,4 +154,20 @@ class WayfindingManager:
         Returns:
             Dict with "started" bool and "verbal" response.
         """
-        raise NotImplementedError
+        poi_name = args.get("poi_name", "")
+        result = await self._nav.navigate_to(poi_name)
+
+        if result.get("success"):
+            self._bus.emit(
+                EventType.DISPLAY_NAV_STATUS,
+                {"status": "navigating", "destination": poi_name},
+            )
+            return {
+                "started": True,
+                "verbal": f"On my way to {poi_name}!",
+            }
+
+        return {
+            "started": False,
+            "verbal": f"Sorry, I couldn't navigate to {poi_name}.",
+        }

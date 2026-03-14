@@ -161,6 +161,7 @@ class MapManager:
         self._map_meta: dict = {}
         self._current_pose: dict = {"x": 0.0, "y": 0.0, "theta": 0.0}
         self._path_points: list[tuple[float, float]] = []
+        self._poi_positions: dict[str, dict] = {}  # name → {"x": float, "y": float}
 
     # ------------------------------------------------------------------
     # Lifecycle
@@ -176,6 +177,7 @@ class MapManager:
         self._bus.subscribe(EventType.CHASSIS_POSE_UPDATE, self._on_pose_update)
         self._bus.subscribe(EventType.CHASSIS_PATH_UPDATE, self._on_path_update)
         self._bus.subscribe(EventType.CHASSIS_CONNECTED, self._on_chassis_connected)
+        self._bus.subscribe(EventType.POI_LIST_UPDATED, self._on_poi_list_updated)
 
         await self._chassis.subscribe_topic(
             self._cfg.map_topic,
@@ -283,9 +285,111 @@ class MapManager:
         base.save(buf, format="PNG")
         return buf.getvalue()
 
+    def render_map_with_highlight(
+        self,
+        poi_name: str,
+        highlight_color: str | None = None,
+        radius: int | None = None,
+    ) -> bytes:
+        """Render the map with a destination POI highlighted as a circle overlay.
+
+        Draws the highlight circle before the robot arrow so the arrow renders
+        on top. Falls back to the base render when no map is loaded.
+
+        Args:
+            poi_name: Chassis marker name whose position should be highlighted.
+            highlight_color: PIL color string for the circle. Defaults to config value.
+            radius: Highlight circle radius in pixels. Defaults to config value.
+
+        Returns:
+            PNG image bytes with path, highlight circle, and robot arrow overlaid.
+        """
+        if highlight_color is None:
+            highlight_color = self._cfg.highlight_color
+        if radius is None:
+            radius = self._cfg.highlight_radius_px
+
+        if self._map_image is not None:
+            base = self._map_image.copy()
+            meta = self._map_meta
+        else:
+            base = Image.new("RGBA", _PLACEHOLDER_SIZE, color=(200, 200, 200, 255))
+            meta = {
+                "origin_x": 0.0,
+                "origin_y": 0.0,
+                "resolution": 1.0,
+                "width": _PLACEHOLDER_SIZE[0],
+                "height": _PLACEHOLDER_SIZE[1],
+            }
+
+        draw = ImageDraw.Draw(base)
+
+        # Draw destination highlight circle
+        poi_pos = self._poi_positions.get(poi_name)
+        if poi_pos:
+            hx, hy = world_to_pixel(poi_pos["x"], poi_pos["y"], meta)
+            draw.ellipse(
+                [hx - radius, hy - radius, hx + radius, hy + radius],
+                fill=highlight_color,
+                outline="orange",
+                width=2,
+            )
+
+        # Draw path polyline if we have 2+ points
+        if len(self._path_points) >= 2:
+            pixel_path = [
+                world_to_pixel(x, y, meta) for x, y in self._path_points
+            ]
+            draw.line(pixel_path, fill=self._cfg.path_color, width=2)
+
+        # Draw robot pose arrow
+        px, py = world_to_pixel(
+            self._current_pose["x"],
+            self._current_pose["y"],
+            meta,
+        )
+        draw_robot_arrow(
+            draw,
+            px,
+            py,
+            self._current_pose.get("theta", 0.0),
+            length=self._cfg.arrow_length_px,
+            color=self._cfg.arrow_color,
+        )
+
+        buf = io.BytesIO()
+        base.save(buf, format="PNG")
+        return buf.getvalue()
+
     # ------------------------------------------------------------------
     # Private event handlers
     # ------------------------------------------------------------------
+
+    def _on_poi_list_updated(self, data: dict) -> None:
+        """Handle POI_LIST_UPDATED — cache POI world positions for highlight rendering.
+
+        Populates _poi_positions from marker data. Supports both flat {x, y}
+        and nested {pose: {position: {x, y}}} coordinate formats.
+        """
+        markers = data.get("markers", [])
+        new_positions: dict[str, dict] = {}
+        for marker in markers:
+            name = marker.get("name")
+            if not name:
+                continue
+            # Support flat coordinates
+            if "x" in marker and "y" in marker:
+                new_positions[name] = {"x": float(marker["x"]), "y": float(marker["y"])}
+            else:
+                # Support nested pose.position.x/y
+                pose = marker.get("pose", {})
+                position = pose.get("position", {})
+                if "x" in position and "y" in position:
+                    new_positions[name] = {
+                        "x": float(position["x"]),
+                        "y": float(position["y"]),
+                    }
+        self._poi_positions = new_positions
 
     def _on_map_update(self, data: dict) -> None:
         """Handle CHASSIS_MAP_UPDATE — decode PNG and re-render."""
