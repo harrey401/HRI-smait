@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: phases
 status: planning
-stopped_at: Completed 12-02-PLAN.md (WebSocket data layer and navigation scaffold)
-last_updated: "2026-03-14T21:38:25.712Z"
+stopped_at: Completed 12-05-PLAN.md (Navigation Map and Facilities screens)
+last_updated: "2026-03-14T21:48:33.093Z"
 last_activity: 2026-03-13 — Roadmap rewritten with HOME/LAB split (phases 9-14)
 progress:
   total_phases: 14
   completed_phases: 8
   total_plans: 30
-  completed_plans: 25
+  completed_plans: 26
 ---
 
 # Project State
@@ -83,6 +83,9 @@ Last activity: 2026-03-13 — Roadmap rewritten with HOME/LAB split (phases 9-14
 - [Phase 12]: Compose BOM 2025.01.01 used (2026.03.00 not yet published); Java 17 required for Compose; ThemeRepository uses StateFlow<ThemeConfig> loaded from JSON assets with Gson null-bypass defense
 - [Phase Phase 12]: iconName: String instead of ImageVector on Screen — keeps Screen JVM-testable; screenIcon() extension resolves to ImageVector in Compose layer
 - [Phase Phase 12]: tryEmit() used for WebSocketRepository event emission — non-suspending, safe with extraBufferCapacity=64 buffer absorbing burst binary frames
+- [Phase 12]: Injectable bitmapDecoder lambda for JVM-testable NavigationMapViewModel without Android BitmapFactory
+- [Phase 12]: CoroutineDispatcher?=null pattern: null uses viewModelScope at runtime, UnconfinedTestDispatcher in tests
+- [Phase 12]: StateFlow<Bitmap?> (not ImageBitmap?) keeps ViewModels Compose-free; asImageBitmap() conversion in Screen only
 
 ### Pending Todos
 
@@ -99,7 +102,7 @@ Last activity: 2026-03-13 — Roadmap rewritten with HOME/LAB split (phases 9-14
 
 ## Session Continuity
 
-Last session: 2026-03-14T21:38:20.335Z
-Stopped at: Completed 12-02-PLAN.md (WebSocket data layer and navigation scaffold)
+Last session: 2026-03-14T21:48:33.091Z
+Stopped at: Completed 12-05-PLAN.md (Navigation Map and Facilities screens)
 Resume file: None
 Next step: `/gsd:plan-phase 9`

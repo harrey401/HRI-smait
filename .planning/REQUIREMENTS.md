@@ -126,11 +126,11 @@ Requirements for milestone v2.0. Continues from v1.0 phases.
 - [x] **APP-01**: Complete app rewrite with modern Android architecture (Jetpack Compose, MVVM)
 - [x] **APP-02**: Base design system with theming support (colors, fonts, logos swappable per event)
 - [ ] **APP-03**: Home screen with event-customizable cards (Guided Tour, Ask Me Anything, Facilities, etc.)
-- [ ] **APP-04**: Navigation screen showing live map, robot position, path, and destination
+- [x] **APP-04**: Navigation screen showing live map, robot position, path, and destination
 - [ ] **APP-05**: Conversation UI with transcript display, mic indicator, and robot avatar
-- [ ] **APP-06**: Facilities/wayfinding screen — searchable list of POIs with "take me there" action
+- [x] **APP-06**: Facilities/wayfinding screen — searchable list of POIs with "take me there" action
 - [ ] **APP-07**: Event info screen (schedule, speakers, venue map) — content loaded from config
-- [ ] **APP-08**: All existing audio/video/TTS WebSocket streams preserved in new app architecture
+- [x] **APP-08**: All existing audio/video/TTS WebSocket streams preserved in new app architecture
 - [x] **APP-09**: Event theming via JSON config file (colors, logo, event name, cards, POI labels)
 
 ### WiE Event Customization
