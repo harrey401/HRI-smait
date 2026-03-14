@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: phases
 status: planning
-stopped_at: Completed 10-01-PLAN.md (Phase 10 foundation — core infra + navigation skeletons RED)
-last_updated: "2026-03-14T07:48:51.309Z"
+stopped_at: Completed 10-03-PLAN.md (POIKnowledgeBase GREEN — marker CRUD and name resolution)
+last_updated: "2026-03-14T07:52:36.706Z"
 last_activity: 2026-03-13 — Roadmap rewritten with HOME/LAB split (phases 9-14)
 progress:
   total_phases: 14
   completed_phases: 6
   total_plans: 21
-  completed_plans: 16
+  completed_plans: 17
 ---
 
 # Project State
@@ -66,6 +66,8 @@ Last activity: 2026-03-13 — Roadmap rewritten with HOME/LAB split (phases 9-14
 - [Phase 09]: event_bus property exposed publicly on ChassisClient (client.event_bus) as tests access it directly
 - [Phase 10]: NavigationConfig stored as separate dataclass from ChassisConfig for clean separation
 - [Phase 10]: /global_path auto-subscribed in _setup_subscriptions; subscribe_topic is manual API for MapManager
+- [Phase 10]: Flat response shape {'waypoints': [...]} takes priority over nested in fetch_markers for protocol compatibility
+- [Phase 10]: isinstance(result, dict) guard in fetch_markers for AsyncMock safety and real-world error resilience
 
 ### Pending Todos
 
@@ -82,7 +84,7 @@ Last activity: 2026-03-13 — Roadmap rewritten with HOME/LAB split (phases 9-14
 
 ## Session Continuity
 
-Last session: 2026-03-14T07:48:51.307Z
-Stopped at: Completed 10-01-PLAN.md (Phase 10 foundation — core infra + navigation skeletons RED)
+Last session: 2026-03-14T07:52:36.704Z
+Stopped at: Completed 10-03-PLAN.md (POIKnowledgeBase GREEN — marker CRUD and name resolution)
 Resume file: None
 Next step: `/gsd:plan-phase 9`
