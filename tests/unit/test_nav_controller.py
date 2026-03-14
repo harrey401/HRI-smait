@@ -142,3 +142,37 @@ async def test_calculate_distance():
     chassis.call_service.assert_called_once()
     call_args = str(chassis.call_service.call_args)
     assert "/calculate_distance" in call_args
+
+
+@pytest.mark.asyncio
+async def test_startup_auto_detect():
+    """SETUP-03: CHASSIS_CONNECTED triggers floor detection + POI config load."""
+    config = Config()
+    bus = EventBus()
+    chassis = make_chassis(config, bus)
+
+    # /get_map_info returns building + floor info
+    chassis.call_service.return_value = {
+        "building_name": "tefa",
+        "floor_name": "3",
+    }
+
+    poi_kb = make_poi_kb(config, bus, chassis)
+    poi_kb.load = MagicMock()
+    poi_kb.fetch_markers = AsyncMock(return_value=[])
+
+    floor_events = []
+    bus.subscribe(EventType.MAP_ACTIVE_FLOOR, floor_events.append)
+
+    controller = NavController(config, bus, chassis, poi_kb)  # noqa: F841
+
+    # Fire CHASSIS_CONNECTED — should trigger on_chassis_connected
+    bus.emit(EventType.CHASSIS_CONNECTED, None)
+
+    # Allow async handler to run
+    await asyncio.sleep(0.05)
+
+    poi_kb.load.assert_called_once_with("tefa", "3")
+    poi_kb.fetch_markers.assert_called_once()
+    assert len(floor_events) == 1
+    assert floor_events[0] == {"building": "tefa", "floor": "3"}
