@@ -13,6 +13,7 @@ from typing import Callable
 
 from smait.core.config import Config
 from smait.core.events import EventBus, EventType
+from smait.dialogue.manager import DialogueResponse
 
 logger = logging.getLogger(__name__)
 
@@ -98,6 +99,10 @@ class WayfindingManager:
         self._nav = nav_controller
         self._map = map_manager
 
+        # Subscribe to navigation outcome events for verbal confirmation
+        self._bus.subscribe(EventType.NAV_ARRIVED, self._on_nav_arrived)
+        self._bus.subscribe(EventType.NAV_FAILED, self._on_nav_failed)
+
     def get_tools(self) -> list[dict]:
         """Return OpenAI tool definitions for registration with DialogueManager."""
         return WAYFINDING_TOOLS
@@ -171,3 +176,47 @@ class WayfindingManager:
             "started": False,
             "verbal": f"Sorry, I couldn't navigate to {poi_name}.",
         }
+
+    def _on_nav_arrived(self, data: dict) -> None:
+        """Handle NAV_ARRIVED event — emit verbal confirmation and display update.
+
+        Emits DISPLAY_NAV_STATUS with status=arrived, then DIALOGUE_RESPONSE
+        with a verbal confirmation so the robot speaks the arrival aloud.
+        """
+        destination = data.get("destination", "the destination")
+        self._bus.emit(
+            EventType.DISPLAY_NAV_STATUS,
+            {"status": "arrived", "destination": destination},
+        )
+        self._bus.emit(
+            EventType.DIALOGUE_RESPONSE,
+            DialogueResponse(
+                text=f"We've arrived at {destination}!",
+                latency_ms=0.0,
+                model_used="wayfinding",
+            ),
+        )
+
+    def _on_nav_failed(self, data: dict) -> None:
+        """Handle NAV_FAILED event — emit verbal explanation and display update.
+
+        Emits DISPLAY_NAV_STATUS with status=failed, then DIALOGUE_RESPONSE
+        with a verbal explanation that includes the failure reason when available.
+        """
+        destination = data.get("destination", "the destination")
+        reason = data.get("reason", "unknown")
+        self._bus.emit(
+            EventType.DISPLAY_NAV_STATUS,
+            {"status": "failed", "destination": destination},
+        )
+        verbal = f"Sorry, I wasn't able to reach {destination}."
+        if reason and reason != "unknown":
+            verbal += f" The issue was: {reason}."
+        self._bus.emit(
+            EventType.DIALOGUE_RESPONSE,
+            DialogueResponse(
+                text=verbal,
+                latency_ms=0.0,
+                model_used="wayfinding",
+            ),
+        )

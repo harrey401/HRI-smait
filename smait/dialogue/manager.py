@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import re
 import time
 from dataclasses import dataclass
-from typing import AsyncGenerator, Optional
+from typing import AsyncGenerator, Callable, Optional
 
 import requests
 
@@ -50,6 +51,8 @@ class DialogueManager:
         self._history: list[dict[str, str]] = []
         self._openai_client = None
         self._ollama_url = "http://localhost:11434"
+        self._tools: list[dict] = []
+        self._tool_handlers: dict[str, Callable] = {}
 
     async def init(self) -> None:
         """Initialize LLM backends."""
@@ -155,6 +158,16 @@ class DialogueManager:
         if is_farewell:
             self._event_bus.emit(EventType.SESSION_END, {"reason": "goodbye_detected"})
 
+    def register_tools(self, tools: list[dict], handlers: dict[str, Callable]) -> None:
+        """Register LLM tool definitions and async handler callables.
+
+        Call this once at startup with the tools and handlers from WayfindingManager.
+        Registered tools are passed to OpenAI API calls via tools= and tool_choice="auto".
+        NOTE: Ollama does not receive tools (unreliable tool-calling in local models).
+        """
+        self._tools = tools
+        self._tool_handlers = handlers
+
     async def _ask_ollama(self, user_text: str) -> Optional[DialogueResponse]:
         """Query Ollama local LLM."""
         messages = self._build_messages()
@@ -190,19 +203,35 @@ class DialogueManager:
         return None
 
     async def _ask_api(self, user_text: str) -> Optional[DialogueResponse]:
-        """Query OpenAI API."""
+        """Query OpenAI API, with optional tool-call two-round-trip support.
+
+        If tools are registered via register_tools(), passes them to the first
+        API call. If the response contains tool_calls, executes the handlers and
+        makes a second call to get the verbal response. Ollama does NOT receive
+        tools (graceful degradation for local models).
+        """
         if self._openai_client is None:
             return None
 
         messages = self._build_messages()
         try:
-            response = await self._openai_client.chat.completions.create(
-                model=self._config.api_model,
-                messages=messages,
-                max_tokens=self._config.max_tokens,
-                temperature=self._config.temperature,
-            )
-            text = response.choices[0].message.content or ""
+            kwargs: dict = {
+                "model": self._config.api_model,
+                "messages": messages,
+                "max_tokens": self._config.max_tokens,
+                "temperature": self._config.temperature,
+            }
+            if self._tools:
+                kwargs["tools"] = self._tools
+                kwargs["tool_choice"] = "auto"
+
+            response = await self._openai_client.chat.completions.create(**kwargs)
+            message = response.choices[0].message
+
+            if message.tool_calls:
+                return await self._handle_tool_calls(message, messages)
+
+            text = message.content or ""
             tokens = response.usage.total_tokens if response.usage else 0
             return DialogueResponse(
                 text=text,
@@ -213,6 +242,54 @@ class DialogueManager:
         except Exception:
             logger.debug("OpenAI API request failed")
         return None
+
+    async def _handle_tool_calls(self, message, messages: list) -> Optional[DialogueResponse]:
+        """Execute tool calls and make follow-up LLM call with results.
+
+        Appends the assistant tool_calls message and each tool result to the
+        message list, then makes a second (no-tools) LLM call to produce the
+        verbal response.
+        """
+        # Append assistant message with tool_calls for the second call context
+        messages.append({
+            "role": "assistant",
+            "content": None,
+            "tool_calls": [tc.model_dump() for tc in message.tool_calls],
+        })
+
+        # Execute each tool call and inject result as "tool" role message
+        for tool_call in message.tool_calls:
+            handler = self._tool_handlers.get(tool_call.function.name)
+            if handler is None:
+                logger.warning("No handler registered for tool: %s", tool_call.function.name)
+                continue
+            args = json.loads(tool_call.function.arguments)
+            result = await handler(args)
+            messages.append({
+                "role": "tool",
+                "tool_call_id": tool_call.id,
+                "content": json.dumps(result),
+            })
+
+        # Second LLM call — no tools, get verbal response
+        try:
+            second_resp = await self._openai_client.chat.completions.create(
+                model=self._config.api_model,
+                messages=messages,
+                max_tokens=self._config.max_tokens,
+                temperature=self._config.temperature,
+            )
+            text = second_resp.choices[0].message.content or ""
+            tokens = second_resp.usage.total_tokens if second_resp.usage else 0
+            return DialogueResponse(
+                text=text,
+                latency_ms=0,
+                model_used=self._config.api_model,
+                tokens_used=tokens,
+            )
+        except Exception:
+            logger.exception("Tool follow-up call failed")
+            return None
 
     async def _stream_ollama(self, user_text: str) -> AsyncGenerator[str, None]:
         """Stream from Ollama local LLM."""
