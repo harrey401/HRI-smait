@@ -410,3 +410,177 @@ async def test_fragment_reassembly(mock_chassis: tuple[MockChassisServer, int]) 
     assert data["x"] == pytest.approx(9.9)
     assert data["y"] == pytest.approx(8.8)
     assert data["theta"] == pytest.approx(1.1)
+
+
+# ---------------------------------------------------------------------------
+# Additional coverage tests (Task 2)
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_connected_property(mock_chassis: tuple[MockChassisServer, int]) -> None:
+    """client.connected property reflects WebSocket state."""
+    _require_chassis_client()
+    mock, port = mock_chassis
+    config = Config()
+    config.chassis.host = "localhost"
+    config.chassis.port = port
+    event_bus = EventBus()
+    client = ChassisClient(config, event_bus)
+
+    assert client.connected is False, "Should not be connected before start()"
+    signal, _ = _capture(event_bus, EventType.CHASSIS_CONNECTED)
+    await client.start()
+    try:
+        await asyncio.wait_for(signal.wait(), timeout=2.0)
+        assert client.connected is True, "Should be connected after CHASSIS_CONNECTED"
+    finally:
+        await client.stop()
+
+    assert client.connected is False, "Should not be connected after stop()"
+
+
+@pytest.mark.asyncio
+async def test_obstacle_subscription(mock_chassis: tuple[MockChassisServer, int]) -> None:
+    """Obstacle topic messages emit CHASSIS_OBSTACLE events."""
+    _require_chassis_client()
+    mock, port = mock_chassis
+    config = Config()
+    config.chassis.host = "localhost"
+    config.chassis.port = port
+    event_bus = EventBus()
+    client = ChassisClient(config, event_bus)
+
+    connected, _ = _capture(event_bus, EventType.CHASSIS_CONNECTED)
+    obs_signal, obs_data = _capture(event_bus, EventType.CHASSIS_OBSTACLE)
+
+    await client.start()
+    try:
+        await asyncio.wait_for(connected.wait(), timeout=2.0)
+        await mock.push({
+            "op": "publish",
+            "topic": config.chassis.obstacle_topic,
+            "msg": {"data": 2},
+        })
+        await asyncio.wait_for(obs_signal.wait(), timeout=2.0)
+    finally:
+        await client.stop()
+
+    assert obs_signal.is_set()
+    assert obs_data[0]["region"] == 2
+
+
+@pytest.mark.asyncio
+async def test_send_soft_stop_when_disconnected() -> None:
+    """send_soft_stop raises RuntimeError when not connected."""
+    _require_chassis_client()
+    config = Config()
+    event_bus = EventBus()
+    client = ChassisClient(config, event_bus)
+    # Do not start — not connected
+    with pytest.raises(RuntimeError, match="not connected"):
+        await client.send_soft_stop(True)
+
+
+@pytest.mark.asyncio
+async def test_call_service_when_disconnected() -> None:
+    """call_service raises RuntimeError when not connected."""
+    _require_chassis_client()
+    config = Config()
+    event_bus = EventBus()
+    client = ChassisClient(config, event_bus)
+    with pytest.raises(RuntimeError, match="not connected"):
+        await client.call_service("/some/service")
+
+
+@pytest.mark.asyncio
+async def test_call_service_timeout(mock_chassis: tuple[MockChassisServer, int]) -> None:
+    """call_service raises asyncio.TimeoutError when server does not reply."""
+    _require_chassis_client()
+    mock, port = mock_chassis
+    config = Config()
+    config.chassis.host = "localhost"
+    config.chassis.port = port
+    event_bus = EventBus()
+    client = ChassisClient(config, event_bus)
+
+    connected, _ = _capture(event_bus, EventType.CHASSIS_CONNECTED)
+    await client.start()
+    try:
+        await asyncio.wait_for(connected.wait(), timeout=2.0)
+        with pytest.raises(asyncio.TimeoutError):
+            await client.call_service("/nonexistent/service", timeout=0.2)
+    finally:
+        await client.stop()
+
+
+@pytest.mark.asyncio
+async def test_call_service_success(mock_chassis: tuple[MockChassisServer, int]) -> None:
+    """call_service resolves when server sends service_response with matching id."""
+    _require_chassis_client()
+    mock, port = mock_chassis
+    config = Config()
+    config.chassis.host = "localhost"
+    config.chassis.port = port
+    event_bus = EventBus()
+    client = ChassisClient(config, event_bus)
+
+    connected, _ = _capture(event_bus, EventType.CHASSIS_CONNECTED)
+    await client.start()
+    try:
+        await asyncio.wait_for(connected.wait(), timeout=2.0)
+
+        # Start the call_service coroutine
+        call_task = asyncio.get_event_loop().create_task(
+            client.call_service("/test/service", timeout=3.0)
+        )
+        # Give the task a moment to send the op and register the future
+        await asyncio.sleep(0.1)
+
+        # Find the call_service message to get its id
+        call_msgs = [m for m in mock.received if m.get("op") == "call_service"]
+        assert call_msgs, "No call_service op received by mock"
+        call_id = call_msgs[0]["id"]
+
+        # Push a service_response with matching id
+        await mock.push({
+            "op": "service_response",
+            "id": call_id,
+            "result": True,
+            "values": {"result": "ok"},
+        })
+
+        result = await asyncio.wait_for(call_task, timeout=2.0)
+        assert result == {"result": "ok"}
+    finally:
+        await client.stop()
+
+
+@pytest.mark.asyncio
+async def test_rosbridge_fragment_reassembly(mock_chassis: tuple[MockChassisServer, int]) -> None:
+    """Client reassembles rosbridge op=fragment messages (multi-part protocol)."""
+    _require_chassis_client()
+    mock, port = mock_chassis
+    config = Config()
+    config.chassis.host = "localhost"
+    config.chassis.port = port
+    event_bus = EventBus()
+    client = ChassisClient(config, event_bus)
+
+    connected, _ = _capture(event_bus, EventType.CHASSIS_CONNECTED)
+    pose_signal, pose_data = _capture(event_bus, EventType.CHASSIS_POSE_UPDATE)
+
+    full_msg = {"op": "publish", "topic": config.chassis.pose_topic, "msg": {"x": 3.0, "y": 4.0, "theta": 0.5}}
+    full_json = __import__("json").dumps(full_msg)
+
+    await client.start()
+    try:
+        await asyncio.wait_for(connected.wait(), timeout=2.0)
+        # Send as 2 rosbridge fragments
+        await mock.push({"op": "fragment", "id": "frag-test", "num": 0, "total": 2, "data": full_json[:len(full_json)//2]})
+        await mock.push({"op": "fragment", "id": "frag-test", "num": 1, "total": 2, "data": full_json[len(full_json)//2:]})
+        await asyncio.wait_for(pose_signal.wait(), timeout=2.0)
+    finally:
+        await client.stop()
+
+    assert pose_signal.is_set(), "CHASSIS_POSE_UPDATE not fired after rosbridge fragment reassembly"
+    assert pose_data[0]["x"] == pytest.approx(3.0)
