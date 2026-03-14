@@ -93,7 +93,7 @@ async def test_list_maps():
 
 @pytest.mark.asyncio
 async def test_switch_map():
-    """MAP-03: switch_map() calls /layered_map_cmd with cmd=7 for the target floor."""
+    """MAP-03: switch_map() calls /node_manager_control with cmd=7 for the target floor."""
     config = Config()
     bus = EventBus()
     chassis = make_chassis(config, bus)
@@ -106,7 +106,7 @@ async def test_switch_map():
     chassis.call_service.assert_called_once()
     call_args = chassis.call_service.call_args
     # First arg is service name
-    assert "/layered_map_cmd" in str(call_args)
+    assert "/node_manager_control" in str(call_args)
     # args should include cmd=7
     assert "7" in str(call_args) or 7 in str(call_args).split()
 

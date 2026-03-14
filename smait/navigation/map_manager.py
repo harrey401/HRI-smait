@@ -210,7 +210,7 @@ class MapManager:
             True if switch succeeded (result == 0), False otherwise.
         """
         result = await self._chassis.call_service(
-            "/layered_map_cmd",
+            "/node_manager_control",
             {
                 "building_name": building,
                 "floor_num": str(floor),
