@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: phases
 status: planning
-stopped_at: Completed 10-02-PLAN.md (MapManager GREEN phase — decode, render, list, switch)
-last_updated: "2026-03-14T07:53:08.149Z"
+stopped_at: Completed 10-04-PLAN.md (NavController GREEN — navigate, cancel, distance, status monitoring, SETUP-03)
+last_updated: "2026-03-14T07:57:51.987Z"
 last_activity: 2026-03-13 — Roadmap rewritten with HOME/LAB split (phases 9-14)
 progress:
   total_phases: 14
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 21
-  completed_plans: 18
+  completed_plans: 19
 ---
 
 # Project State
@@ -71,6 +71,8 @@ Last activity: 2026-03-13 — Roadmap rewritten with HOME/LAB split (phases 9-14
 - [Phase 10]: decode_map_png dual-format: flat dict for tests, nested rosbridge msg for real chassis
 - [Phase 10]: render_map returns placeholder grey PNG when no map loaded — prevents callers from getting None
 - [Phase 10]: switch_map calls /layered_map_cmd with cmd=7 (matches test assertion and real protocol)
+- [Phase 10]: NavController owns SETUP-03 startup wiring — coordinator between /get_map_info results and POIKnowledgeBase loads
+- [Phase 10]: navigate_to falls back to original poi_name when resolve() returns None — chassis marker names bypass KB lookup
 
 ### Pending Todos
 
@@ -87,7 +89,7 @@ Last activity: 2026-03-13 — Roadmap rewritten with HOME/LAB split (phases 9-14
 
 ## Session Continuity
 
-Last session: 2026-03-14T07:53:08.147Z
-Stopped at: Completed 10-02-PLAN.md (MapManager GREEN phase — decode, render, list, switch)
+Last session: 2026-03-14T07:57:51.985Z
+Stopped at: Completed 10-04-PLAN.md (NavController GREEN — navigate, cancel, distance, status monitoring, SETUP-03)
 Resume file: None
 Next step: `/gsd:plan-phase 9`
