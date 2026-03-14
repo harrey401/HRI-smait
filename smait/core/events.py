@@ -62,6 +62,14 @@ class EventType(Enum):
     # System
     ERROR = auto()
 
+    # Chassis / Navigation
+    CHASSIS_POSE_UPDATE = auto()      # data: {"x": float, "y": float, "theta": float}
+    CHASSIS_NAV_STATUS = auto()       # data: {"status": int, "text": str, "goal_id": str}
+    CHASSIS_STATE_UPDATE = auto()     # data: {"battery": float, "nav_status": int, "control_state": int, "velocity": list}
+    CHASSIS_OBSTACLE = auto()         # data: {"region": int}
+    CHASSIS_CONNECTED = auto()        # data: None
+    CHASSIS_DISCONNECTED = auto()     # data: None
+
 
 class EventBus:
     """Async pub/sub. Supports both coroutine and sync handlers."""

@@ -122,6 +122,18 @@ class LogConfig:
 
 
 @dataclass
+class ChassisConfig:
+    host: str = "192.168.20.22"
+    port: int = 9090
+    reconnect_max_wait_s: float = 30.0
+    pose_topic: str = "/robot_pose"
+    status_topic: str = "/robot_status"
+    nav_status_topic: str = "/navi_status"
+    obstacle_topic: str = "/obstacle_region"
+    soft_stop_topic: str = "/soft_stop"
+
+
+@dataclass
 class Config:
     connection: ConnectionConfig = field(default_factory=ConnectionConfig)
     audio: AudioConfig = field(default_factory=AudioConfig)
@@ -135,6 +147,7 @@ class Config:
     tts: TTSConfig = field(default_factory=TTSConfig)
     session: SessionConfig = field(default_factory=SessionConfig)
     logging: LogConfig = field(default_factory=LogConfig)
+    chassis: ChassisConfig = field(default_factory=ChassisConfig)
     debug: bool = False
     show_video: bool = True
 
