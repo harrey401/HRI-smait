@@ -55,6 +55,32 @@ async def test_navigate_to_poi():
 
 
 @pytest.mark.asyncio
+async def test_navigate_to_poi_not_found():
+    """NAV-02: navigate_to() emits NAV_FAILED with reason='poi_not_found' when /poi returns success=False."""
+    config = Config()
+    bus = EventBus()
+    chassis = make_chassis(config, bus)
+    chassis.call_service.return_value = {
+        "success": False,
+        "avaliable_list": ["eng192", "restroom_1"],
+    }
+    poi_kb = make_poi_kb(config, bus, chassis)
+    controller = NavController(config, bus, chassis, poi_kb)
+
+    failed_events = []
+    bus.subscribe(EventType.NAV_FAILED, failed_events.append)
+
+    result = await controller.navigate_to("nonexistent")
+
+    assert len(failed_events) == 1, f"Expected NAV_FAILED, got {failed_events}"
+    event_data = failed_events[0]
+    assert event_data["reason"] == "poi_not_found"
+    assert event_data["destination"] == "nonexistent"
+    assert "eng192" in event_data["available"]
+    assert result.get("success") is False
+
+
+@pytest.mark.asyncio
 async def test_nav_status_events():
     """NAV-03: NAV_ARRIVED is emitted for status=3 (succeeded), NAV_FAILED for status=4 (aborted)."""
     config = Config()
