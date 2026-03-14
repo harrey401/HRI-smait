@@ -216,13 +216,14 @@ Plans:
   5. Path subscription delivers waypoints from the mock chassis and the rendered map image shows the planned path as an overlay
   6. On startup, the server reads available maps from the chassis, selects the active floor, and loads the matching POI JSON config file automatically
 
-**Plans:** 4/4 plans complete
+**Plans:** 5 plans (4 complete, 1 gap closure pending)
 
 Plans:
 - [ ] 10-01-PLAN.md — Core infrastructure: EventTypes, NavigationConfig, ChassisClient extensions, module skeletons, RED test suites
 - [ ] 10-02-PLAN.md — MapManager TDD: map PNG decode, world-to-pixel transform, rendering, list/switch maps
 - [ ] 10-03-PLAN.md — POIKnowledgeBase TDD: marker CRUD, human-name resolution, JSON config loading
 - [ ] 10-04-PLAN.md — NavController TDD: nav commands, status monitoring, distance calc, startup wiring, SETUP docs
+- [ ] 10-05-PLAN.md — Gap closure: fix switch_map protocol endpoint, add event handler tests for 80%+ coverage
 
 ### Phase 11: Wayfinding LLM Tools and Display Rendering (HOME)
 **Goal**: Users can ask Jackie "where is X?" or "take me to X" in code — LLM tools, verbal responses, and map rendering all work with mock data
