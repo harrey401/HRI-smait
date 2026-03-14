@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: phases
 status: planning
-stopped_at: Completed 12-01-PLAN.md (Build system + WiE theme)
-last_updated: "2026-03-14T21:30:00.013Z"
+stopped_at: Completed 12-02-PLAN.md (WebSocket data layer and navigation scaffold)
+last_updated: "2026-03-14T21:38:25.712Z"
 last_activity: 2026-03-13 — Roadmap rewritten with HOME/LAB split (phases 9-14)
 progress:
   total_phases: 14
   completed_phases: 8
   total_plans: 30
-  completed_plans: 24
+  completed_plans: 25
 ---
 
 # Project State
@@ -81,6 +81,8 @@ Last activity: 2026-03-13 — Roadmap rewritten with HOME/LAB split (phases 9-14
 - [Phase 11]: WayfindingManager subscribes to NAV_ARRIVED/NAV_FAILED in __init__ for verbal arrival/failure confirmations
 - [Phase 11]: DIALOGUE_RESPONSE emitted by WayfindingManager with model_used=wayfinding to distinguish from LLM responses
 - [Phase 12]: Compose BOM 2025.01.01 used (2026.03.00 not yet published); Java 17 required for Compose; ThemeRepository uses StateFlow<ThemeConfig> loaded from JSON assets with Gson null-bypass defense
+- [Phase Phase 12]: iconName: String instead of ImageVector on Screen — keeps Screen JVM-testable; screenIcon() extension resolves to ImageVector in Compose layer
+- [Phase Phase 12]: tryEmit() used for WebSocketRepository event emission — non-suspending, safe with extraBufferCapacity=64 buffer absorbing burst binary frames
 
 ### Pending Todos
 
@@ -97,7 +99,7 @@ Last activity: 2026-03-13 — Roadmap rewritten with HOME/LAB split (phases 9-14
 
 ## Session Continuity
 
-Last session: 2026-03-14T21:30:00.011Z
-Stopped at: Completed 12-01-PLAN.md (Build system + WiE theme)
+Last session: 2026-03-14T21:38:20.335Z
+Stopped at: Completed 12-02-PLAN.md (WebSocket data layer and navigation scaffold)
 Resume file: None
 Next step: `/gsd:plan-phase 9`
