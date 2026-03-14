@@ -237,7 +237,12 @@ Plans:
   4. When `navigate_to` fires, the robot emits a verbal status update (e.g., "On my way to ENG192") and the display updates to show navigating status — both verified with mock chassis and mock LLM
   5. When the mock chassis emits navigation_success or navigation_failed, the verbal response and display update are triggered correctly
 
-**Plans**: TBD
+**Plans:** 3 plans
+
+Plans:
+- [ ] 11-01-PLAN.md — WayfindingManager TDD: tool definitions, query_location/navigate_to handlers, MapManager highlight rendering
+- [ ] 11-02-PLAN.md — Display dispatch TDD: FrameType.MAP_IMAGE 0x06, ConnectionManager send methods, EventBus wiring
+- [ ] 11-03-PLAN.md — DialogueManager tool-call integration, NAV_ARRIVED/NAV_FAILED verbal handlers
 
 ### Phase 12: Android App Rebuild and WiE Theme (HOME)
 **Goal**: Jackie's touchscreen app is fully rebuilt with Jetpack Compose, ships WiE 2026 branding, and all WebSocket streams are preserved
@@ -306,7 +311,7 @@ Plans:
 | 8. Full Integration & Quality | LAB | 0/3 | Not started | - |
 | 9. Chassis WebSocket Client (HOME) | HOME | 2/2 | Complete | 2026-03-14 |
 | 10. Map, POI, and Navigation Server Code (HOME) | 5/5 | Complete    | 2026-03-14 | - |
-| 11. Wayfinding LLM Tools and Display Rendering (HOME) | HOME | 0/? | Not started | - |
+| 11. Wayfinding LLM Tools and Display Rendering (HOME) | HOME | 0/3 | Planning complete | - |
 | 12. Android App Rebuild and WiE Theme (HOME) | HOME | 0/? | Not started | - |
 | 13. Lab Integration and Robot Verification (LAB) | LAB | 0/? | Not started | - |
 | 14. WiE On-Site Deployment (LAB/on-site) | LAB/on-site | 0/? | Not started | - |
