@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: phases
 status: planning
-stopped_at: Phase 12 context gathered
-last_updated: "2026-03-14T20:44:48.309Z"
+stopped_at: Completed 12-01-PLAN.md (Build system + WiE theme)
+last_updated: "2026-03-14T21:30:00.013Z"
 last_activity: 2026-03-13 — Roadmap rewritten with HOME/LAB split (phases 9-14)
 progress:
   total_phases: 14
   completed_phases: 8
-  total_plans: 25
-  completed_plans: 23
+  total_plans: 30
+  completed_plans: 24
 ---
 
 # Project State
@@ -80,6 +80,7 @@ Last activity: 2026-03-13 — Roadmap rewritten with HOME/LAB split (phases 9-14
 - [Phase 11]: Ollama path does NOT receive tools= parameter — local LLMs have unreliable tool-calling
 - [Phase 11]: WayfindingManager subscribes to NAV_ARRIVED/NAV_FAILED in __init__ for verbal arrival/failure confirmations
 - [Phase 11]: DIALOGUE_RESPONSE emitted by WayfindingManager with model_used=wayfinding to distinguish from LLM responses
+- [Phase 12]: Compose BOM 2025.01.01 used (2026.03.00 not yet published); Java 17 required for Compose; ThemeRepository uses StateFlow<ThemeConfig> loaded from JSON assets with Gson null-bypass defense
 
 ### Pending Todos
 
@@ -96,7 +97,7 @@ Last activity: 2026-03-13 — Roadmap rewritten with HOME/LAB split (phases 9-14
 
 ## Session Continuity
 
-Last session: 2026-03-14T20:44:48.307Z
-Stopped at: Phase 12 context gathered
-Resume file: .planning/phases/12-android-app-rebuild-and-wie-theme-home/12-CONTEXT.md
+Last session: 2026-03-14T21:30:00.011Z
+Stopped at: Completed 12-01-PLAN.md (Build system + WiE theme)
+Resume file: None
 Next step: `/gsd:plan-phase 9`

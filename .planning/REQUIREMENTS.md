@@ -123,19 +123,19 @@ Requirements for milestone v2.0. Continues from v1.0 phases.
 
 ### Android App Rebuild
 
-- [ ] **APP-01**: Complete app rewrite with modern Android architecture (Jetpack Compose, MVVM)
-- [ ] **APP-02**: Base design system with theming support (colors, fonts, logos swappable per event)
+- [x] **APP-01**: Complete app rewrite with modern Android architecture (Jetpack Compose, MVVM)
+- [x] **APP-02**: Base design system with theming support (colors, fonts, logos swappable per event)
 - [ ] **APP-03**: Home screen with event-customizable cards (Guided Tour, Ask Me Anything, Facilities, etc.)
 - [ ] **APP-04**: Navigation screen showing live map, robot position, path, and destination
 - [ ] **APP-05**: Conversation UI with transcript display, mic indicator, and robot avatar
 - [ ] **APP-06**: Facilities/wayfinding screen — searchable list of POIs with "take me there" action
 - [ ] **APP-07**: Event info screen (schedule, speakers, venue map) — content loaded from config
 - [ ] **APP-08**: All existing audio/video/TTS WebSocket streams preserved in new app architecture
-- [ ] **APP-09**: Event theming via JSON config file (colors, logo, event name, cards, POI labels)
+- [x] **APP-09**: Event theming via JSON config file (colors, logo, event name, cards, POI labels)
 
 ### WiE Event Customization
 
-- [ ] **WIE-01**: WiE 2026 theme applied: purple/teal/orange palette, "Engineering Beyond Imagination" branding
+- [x] **WIE-01**: WiE 2026 theme applied: purple/teal/orange palette, "Engineering Beyond Imagination" branding
 - [ ] **WIE-02**: WiE-specific cards: session tracks, career panels, keynote info, venue directions
 - [ ] **WIE-03**: Student Union POIs labeled for WiE (registration, keynote hall, panel rooms, networking area)
 
