@@ -235,16 +235,23 @@ class ConnectionManager:
 
     async def send_map_image(self, png_bytes: bytes) -> None:
         """Send map image to Jackie as binary frame 0x06."""
-        raise NotImplementedError
+        frame = BinaryFrame.pack(FrameType.MAP_IMAGE, png_bytes)
+        await self.send_binary(frame)
 
     async def send_nav_status(self, status: str, destination: str) -> None:
         """Send navigation status update to Jackie as JSON text."""
-        raise NotImplementedError
+        await self.send_text(MessageSchema.nav_status(status, destination))
 
     async def _on_display_map(self, data: Any) -> None:
         """Handle DISPLAY_MAP event -- send map PNG to Jackie."""
-        raise NotImplementedError
+        png_bytes = data.get("png", b"") if isinstance(data, dict) else b""
+        if png_bytes:
+            await self.send_map_image(png_bytes)
 
     async def _on_display_nav_status(self, data: Any) -> None:
         """Handle DISPLAY_NAV_STATUS event -- send nav status JSON to Jackie."""
-        raise NotImplementedError
+        if not isinstance(data, dict):
+            return
+        status = data.get("status", "unknown")
+        destination = data.get("destination", "")
+        await self.send_nav_status(status, destination)
