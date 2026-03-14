@@ -41,6 +41,8 @@ class ConnectionManager:
         event_bus.subscribe(EventType.TTS_AUDIO_CHUNK, self._on_tts_audio_chunk)
         event_bus.subscribe(EventType.TTS_START, self._on_tts_start)
         event_bus.subscribe(EventType.TTS_END, self._on_tts_end)
+        event_bus.subscribe(EventType.DISPLAY_MAP, self._on_display_map)
+        event_bus.subscribe(EventType.DISPLAY_NAV_STATUS, self._on_display_nav_status)
 
     @property
     def connected(self) -> bool:
@@ -230,3 +232,19 @@ class ConnectionManager:
 
     async def _on_tts_end(self, _data: Any) -> None:
         await self.send_tts_control("end")
+
+    async def send_map_image(self, png_bytes: bytes) -> None:
+        """Send map image to Jackie as binary frame 0x06."""
+        raise NotImplementedError
+
+    async def send_nav_status(self, status: str, destination: str) -> None:
+        """Send navigation status update to Jackie as JSON text."""
+        raise NotImplementedError
+
+    async def _on_display_map(self, data: Any) -> None:
+        """Handle DISPLAY_MAP event -- send map PNG to Jackie."""
+        raise NotImplementedError
+
+    async def _on_display_nav_status(self, data: Any) -> None:
+        """Handle DISPLAY_NAV_STATUS event -- send nav status JSON to Jackie."""
+        raise NotImplementedError

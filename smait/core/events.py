@@ -83,6 +83,10 @@ class EventType(Enum):
     POI_LIST_UPDATED = auto()         # data: {"markers": list[dict]}
     POI_CONFIG_MISSING = auto()       # data: {"building": str, "floor": str}
 
+    # Display / Wayfinding (Phase 11)
+    DISPLAY_MAP = auto()              # data: {"png": bytes, "highlighted_poi": str}
+    DISPLAY_NAV_STATUS = auto()       # data: {"status": str, "destination": str}
+
 
 class EventBus:
     """Async pub/sub. Supports both coroutine and sync handlers."""

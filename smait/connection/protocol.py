@@ -15,6 +15,7 @@ class FrameType(IntEnum):
     AUDIO_RAW = 0x03       # Raw 4-channel audio (Jackie → PC)
     CONTROL = 0x04         # Control frame (reserved)
     TTS_AUDIO = 0x05       # TTS audio from PC (PC → Jackie)
+    MAP_IMAGE = 0x06       # Map PNG image (PC → Jackie)
 
 
 class MessageSchema:
@@ -64,6 +65,19 @@ class MessageSchema:
     def response(text: str) -> str:
         """Full response text (adds to chat + triggers TTS)."""
         return json.dumps({"type": "response", "text": text})
+
+    @staticmethod
+    def nav_status(status: str, destination: str) -> str:
+        """Navigation status update for Jackie UI.
+
+        status: "navigating" | "arrived" | "cancelled" | "failed"
+        destination: POI name or location string
+        """
+        return json.dumps({
+            "type": "nav_status",
+            "status": status,
+            "destination": destination,
+        })
 
     # --- Inbound: Jackie → PC (parsing) ---
 
