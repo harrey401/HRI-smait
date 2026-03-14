@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: phases
 status: planning
-stopped_at: Completed 12-05-PLAN.md (Navigation Map and Facilities screens)
-last_updated: "2026-03-14T21:48:33.093Z"
+stopped_at: Completed 12-03-PLAN.md (Home screen and Event Info screen)
+last_updated: "2026-03-14T21:51:12.595Z"
 last_activity: 2026-03-13 — Roadmap rewritten with HOME/LAB split (phases 9-14)
 progress:
   total_phases: 14
-  completed_phases: 8
+  completed_phases: 9
   total_plans: 30
-  completed_plans: 26
+  completed_plans: 28
 ---
 
 # Project State
@@ -86,6 +86,9 @@ Last activity: 2026-03-13 — Roadmap rewritten with HOME/LAB split (phases 9-14
 - [Phase 12]: Injectable bitmapDecoder lambda for JVM-testable NavigationMapViewModel without Android BitmapFactory
 - [Phase 12]: CoroutineDispatcher?=null pattern: null uses viewModelScope at runtime, UnconfinedTestDispatcher in tests
 - [Phase 12]: StateFlow<Bitmap?> (not ImageBitmap?) keeps ViewModels Compose-free; asImageBitmap() conversion in Screen only
+- [Phase 12]: Inject optional CoroutineScope to HomeViewModel/EventInfoViewModel for testability without Dispatchers.setMain
+- [Phase 12]: CardAction sealed class with NavigateToTab and ShowInlineContent for JSON-driven card routing
+- [Phase 12]: CaeAudioManager.setWriterCallback() added for DI-style audio routing; writer callback takes priority over direct WebSocket for backward compatibility
 
 ### Pending Todos
 
@@ -102,7 +105,7 @@ Last activity: 2026-03-13 — Roadmap rewritten with HOME/LAB split (phases 9-14
 
 ## Session Continuity
 
-Last session: 2026-03-14T21:48:33.091Z
-Stopped at: Completed 12-05-PLAN.md (Navigation Map and Facilities screens)
+Last session: 2026-03-14T21:49:38.567Z
+Stopped at: Completed 12-03-PLAN.md (Home screen and Event Info screen)
 Resume file: None
 Next step: `/gsd:plan-phase 9`

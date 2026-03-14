@@ -258,7 +258,7 @@ Plans:
   6. Facilities/wayfinding screen lists POIs from the server's knowledge base and a "Take me there" tap triggers the navigate_to flow
   7. Event info screen shows schedule, speakers, and venue map loaded from the JSON config — WiE 2026 content populated
 
-**Plans:** 3/5 plans executed
+**Plans:** 4/5 plans executed
 
 Plans:
 - [ ] 12-01-PLAN.md — Build system migration to Compose + Kotlin, theme system, data models, WiE 2026 JSON config
@@ -319,6 +319,6 @@ Plans:
 | 9. Chassis WebSocket Client (HOME) | HOME | 2/2 | Complete | 2026-03-14 |
 | 10. Map, POI, and Navigation Server Code (HOME) | HOME | 5/5 | Complete | 2026-03-14 |
 | 11. Wayfinding LLM Tools and Display Rendering (HOME) | HOME | 3/3 | Complete | 2026-03-14 |
-| 12. Android App Rebuild and WiE Theme (HOME) | 3/5 | In Progress|  | - |
+| 12. Android App Rebuild and WiE Theme (HOME) | 4/5 | In Progress|  | - |
 | 13. Lab Integration and Robot Verification (LAB) | LAB | 0/? | Not started | - |
 | 14. WiE On-Site Deployment (LAB/on-site) | LAB/on-site | 0/? | Not started | - |
