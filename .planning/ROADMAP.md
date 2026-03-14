@@ -216,7 +216,7 @@ Plans:
   5. Path subscription delivers waypoints from the mock chassis and the rendered map image shows the planned path as an overlay
   6. On startup, the server reads available maps from the chassis, selects the active floor, and loads the matching POI JSON config file automatically
 
-**Plans:** 5 plans (4 complete, 1 gap closure pending)
+**Plans:** 5/5 plans complete
 
 Plans:
 - [ ] 10-01-PLAN.md — Core infrastructure: EventTypes, NavigationConfig, ChassisClient extensions, module skeletons, RED test suites
@@ -305,7 +305,7 @@ Plans:
 | 7. GPU Validation & Model Loading | LAB | 0/2 | Not started | - |
 | 8. Full Integration & Quality | LAB | 0/3 | Not started | - |
 | 9. Chassis WebSocket Client (HOME) | HOME | 2/2 | Complete | 2026-03-14 |
-| 10. Map, POI, and Navigation Server Code (HOME) | 4/4 | Complete   | 2026-03-14 | - |
+| 10. Map, POI, and Navigation Server Code (HOME) | 5/5 | Complete   | 2026-03-14 | - |
 | 11. Wayfinding LLM Tools and Display Rendering (HOME) | HOME | 0/? | Not started | - |
 | 12. Android App Rebuild and WiE Theme (HOME) | HOME | 0/? | Not started | - |
 | 13. Lab Integration and Robot Verification (LAB) | LAB | 0/? | Not started | - |

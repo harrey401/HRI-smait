@@ -117,9 +117,9 @@ Requirements for milestone v2.0. Continues from v1.0 phases.
 
 ### Setup & Deployment
 
-- [ ] **SETUP-01**: New location setup documented: map with Deployment Tool → label POIs via voice or config
+- [x] **SETUP-01**: New location setup documented: map with Deployment Tool → label POIs via voice or config
 - [x] **SETUP-02**: POI config stored as JSON file per building/floor for easy portability
-- [ ] **SETUP-03**: System auto-detects available maps and active floor on startup
+- [x] **SETUP-03**: System auto-detects available maps and active floor on startup
 
 ### Android App Rebuild
 
@@ -229,10 +229,10 @@ Deferred to future milestone.
 | CHAS-04 | Phase 9 | HOME | Pending |
 | CHAS-05 | Phase 9 | HOME | Pending |
 | CHAS-06 | Phase 9 | HOME | Pending |
-| MAP-01 | Phase 10 | HOME | Pending |
-| MAP-02 | Phase 10 | HOME | Pending |
-| MAP-03 | Phase 10 | HOME | Pending |
-| MAP-04 | Phase 10 | HOME | Pending |
+| MAP-01 | Phase 10 | HOME | Complete |
+| MAP-02 | Phase 10 | HOME | Complete |
+| MAP-03 | Phase 10 | HOME | Complete |
+| MAP-04 | Phase 10 | HOME | Complete |
 | POI-01 | Phase 10 | HOME | Pending |
 | POI-02 | Phase 10 | HOME | Pending |
 | POI-03 | Phase 10 | HOME | Pending |

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: phases
 status: planning
-stopped_at: Completed 10-04-PLAN.md (NavController GREEN — navigate, cancel, distance, status monitoring, SETUP-03)
-last_updated: "2026-03-14T07:57:51.987Z"
+stopped_at: Completed 10-05-PLAN.md (gap closure — switch_map protocol fix, event handler tests, coverage 90%)
+last_updated: "2026-03-14T09:29:10.926Z"
 last_activity: 2026-03-13 — Roadmap rewritten with HOME/LAB split (phases 9-14)
 progress:
   total_phases: 14
   completed_phases: 7
-  total_plans: 21
-  completed_plans: 19
+  total_plans: 22
+  completed_plans: 20
 ---
 
 # Project State
@@ -73,6 +73,7 @@ Last activity: 2026-03-13 — Roadmap rewritten with HOME/LAB split (phases 9-14
 - [Phase 10]: switch_map calls /layered_map_cmd with cmd=7 (matches test assertion and real protocol)
 - [Phase 10]: NavController owns SETUP-03 startup wiring — coordinator between /get_map_info results and POIKnowledgeBase loads
 - [Phase 10]: navigate_to falls back to original poi_name when resolve() returns None — chassis marker names bypass KB lookup
+- [Phase Phase 10]: switch_map calls /node_manager_control with cmd=7 (not /layered_map_cmd which is for listing)
 
 ### Pending Todos
 
@@ -89,7 +90,7 @@ Last activity: 2026-03-13 — Roadmap rewritten with HOME/LAB split (phases 9-14
 
 ## Session Continuity
 
-Last session: 2026-03-14T07:57:51.985Z
-Stopped at: Completed 10-04-PLAN.md (NavController GREEN — navigate, cancel, distance, status monitoring, SETUP-03)
+Last session: 2026-03-14T09:29:10.924Z
+Stopped at: Completed 10-05-PLAN.md (gap closure — switch_map protocol fix, event handler tests, coverage 90%)
 Resume file: None
 Next step: `/gsd:plan-phase 9`
