@@ -82,25 +82,25 @@ Requirements for milestone v2.0. Continues from v1.0 phases.
 
 ### Map & Localization
 
-- [ ] **MAP-01**: Server retrieves LIDAR occupancy grid map as PNG from chassis
-- [ ] **MAP-02**: Server retrieves list of available maps/buildings/floors
-- [ ] **MAP-03**: Server can switch active map (building + floor)
-- [ ] **MAP-04**: Map image rendered with robot position overlay and sent to Jackie touchscreen
+- [x] **MAP-01**: Server retrieves LIDAR occupancy grid map as PNG from chassis
+- [x] **MAP-02**: Server retrieves list of available maps/buildings/floors
+- [x] **MAP-03**: Server can switch active map (building + floor)
+- [x] **MAP-04**: Map image rendered with robot position overlay and sent to Jackie touchscreen
 
 ### POI Management
 
-- [ ] **POI-01**: Server retrieves current marker points (names, positions, types) from chassis
-- [ ] **POI-02**: Server can add current robot position as a named marker point
-- [ ] **POI-03**: Server can remove a marker point by name
-- [ ] **POI-04**: Location knowledge base maps human-friendly names to POI names ("room ENG192" → "eng192")
+- [x] **POI-01**: Server retrieves current marker points (names, positions, types) from chassis
+- [x] **POI-02**: Server can add current robot position as a named marker point
+- [x] **POI-03**: Server can remove a marker point by name
+- [x] **POI-04**: Location knowledge base maps human-friendly names to POI names ("room ENG192" → "eng192")
 
 ### Navigation
 
-- [ ] **NAV-01**: Server sends navigate-to-POI command by name via /poi service
-- [ ] **NAV-02**: Server subscribes to planned path and renders on map
-- [ ] **NAV-03**: Server monitors navigation progress and reports arrival/failure verbally
-- [ ] **NAV-04**: Server can cancel active navigation
-- [ ] **NAV-05**: Server can calculate distance between two points before navigating
+- [x] **NAV-01**: Server sends navigate-to-POI command by name via /poi service
+- [x] **NAV-02**: Server subscribes to planned path and renders on map
+- [x] **NAV-03**: Server monitors navigation progress and reports arrival/failure verbally
+- [x] **NAV-04**: Server can cancel active navigation
+- [x] **NAV-05**: Server can calculate distance between two points before navigating
 
 ### Wayfinding (LLM Integration)
 
@@ -118,7 +118,7 @@ Requirements for milestone v2.0. Continues from v1.0 phases.
 ### Setup & Deployment
 
 - [ ] **SETUP-01**: New location setup documented: map with Deployment Tool → label POIs via voice or config
-- [ ] **SETUP-02**: POI config stored as JSON file per building/floor for easy portability
+- [x] **SETUP-02**: POI config stored as JSON file per building/floor for easy portability
 - [ ] **SETUP-03**: System auto-detects available maps and active floor on startup
 
 ### Android App Rebuild
