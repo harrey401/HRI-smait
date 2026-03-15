@@ -43,7 +43,7 @@ class SeparationConfig:
 @dataclass
 class ASRConfig:
     model: str = "nvidia/parakeet-tdt-0.6b-v2"
-    confidence_threshold: float = 0.40
+    confidence_threshold: float = -1.0  # Lowered for Jackie CAE audio (negative scores common)
     hallucination_filter: bool = True
 
 
