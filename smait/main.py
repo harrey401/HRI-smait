@@ -200,10 +200,30 @@ class HRISystem:
 
         self.event_bus.subscribe(EventType.SPEECH_DETECTED, on_incoming_data)
 
+        # Connection → Video routing (FACE_UPDATED carries JPEG from Jackie)
+        def on_video_frame(data: object) -> None:
+            if not isinstance(data, dict):
+                return
+            if data.get("type") == "video" and "jpeg" in data:
+                self.video_pipeline.process_jpeg(
+                    data["jpeg"], data.get("timestamp", time.monotonic())
+                )
+
+        self.event_bus.subscribe(EventType.FACE_UPDATED, on_video_frame)
+
         # Speech segment → Separation → ASR
         async def on_speech_segment(segment: object) -> None:
             from smait.sensors.audio_pipeline import SpeechSegment
             if not isinstance(segment, SpeechSegment):
+                return
+
+            # Engagement gating: only process speech when engaged/conversing
+            # In voice_only mode, skip gating (no vision to detect engagement)
+            if not self._voice_only and self.session.state not in (
+                SessionState.ENGAGED, SessionState.CONVERSING
+            ):
+                logger.debug("Ignoring speech segment — session state: %s",
+                             self.session.state.name)
                 return
 
             self.metrics.start_timer("separation")
@@ -309,6 +329,15 @@ class HRISystem:
 
             text = data.get("text", "")
             if not text:
+                return
+
+            # Engagement gating: only respond when engaged/conversing
+            # In voice_only mode, skip gating (no vision to detect engagement)
+            if not self._voice_only and self.session.state not in (
+                SessionState.ENGAGED, SessionState.CONVERSING
+            ):
+                logger.debug("Ignoring end-of-turn — session state: %s",
+                             self.session.state.name)
                 return
 
             self.metrics.start_timer("dialogue")
@@ -436,39 +465,70 @@ class HRISystem:
 
         Frames arrive via FACE_UPDATED events from ConnectionManager.
         This loop processes them through the vision pipeline.
+        When show_video is enabled, displays annotated frames via OpenCV.
         """
-        while self._running:
-            # Wait for connection
-            if not self.connection.connected:
-                await asyncio.sleep(0.5)
-                continue
+        cv2 = None
+        if self._config.show_video:
+            try:
+                import cv2 as _cv2
+                cv2 = _cv2
+                logger.info("Video display enabled — will show SMAIT Vision window")
+            except ImportError:
+                logger.warning("show_video enabled but cv2 not available")
 
-            # Process latest video frame
-            frame_data = self.video_pipeline.latest_frame
-            if frame_data is None:
-                await asyncio.sleep(0.033)  # ~30 FPS polling
-                continue
+        try:
+            while self._running:
+                # Wait for connection
+                if not self.connection.connected:
+                    await asyncio.sleep(0.5)
+                    continue
 
-            timestamp = frame_data.timestamp
+                # Process latest video frame
+                frame_data = self.video_pipeline.latest_frame
+                if frame_data is None:
+                    await asyncio.sleep(0.033)  # ~30 FPS polling
+                    continue
 
-            # Face tracking
-            tracks = self.face_tracker.process_frame(frame_data.image, timestamp)
+                timestamp = frame_data.timestamp
 
-            # Gaze estimation + Lip extraction for each tracked face
-            gaze_results = {}
-            for track in tracks:
-                gaze = self.gaze_estimator.estimate(frame_data.image, track, timestamp)
-                gaze_results[track.track_id] = gaze
+                # Face tracking
+                tracks = self.face_tracker.process_frame(frame_data.image, timestamp)
 
-                if self.lip_extractor:
-                    self.lip_extractor.extract(frame_data.image, track, timestamp)
+                # Gaze estimation + Lip extraction for each tracked face
+                gaze_results = {}
+                for track in tracks:
+                    gaze = self.gaze_estimator.estimate(frame_data.image, track, timestamp)
+                    gaze_results[track.track_id] = gaze
 
-            # Engagement detection (pass frame width for DOA-to-pixel mapping)
-            if self.engagement_detector:
-                frame_w = frame_data.image.shape[1]
-                self.engagement_detector.update(tracks, gaze_results, timestamp, frame_w)
+                    if self.lip_extractor:
+                        self.lip_extractor.extract(frame_data.image, track, timestamp)
 
-            await asyncio.sleep(0.033)  # ~30 FPS
+                # Engagement detection (pass frame width for DOA-to-pixel mapping)
+                if self.engagement_detector:
+                    frame_w = frame_data.image.shape[1]
+                    self.engagement_detector.update(tracks, gaze_results, timestamp, frame_w)
+
+                # Display annotated video on lab PC
+                if cv2 is not None:
+                    display = frame_data.image.copy()
+                    for track in tracks:
+                        x, y, w, h = track.bbox
+                        gaze_r = gaze_results.get(track.track_id)
+                        looking = gaze_r and gaze_r.is_looking_at_robot
+                        color = (0, 255, 0) if looking else (255, 255, 0)
+                        cv2.rectangle(display, (x, y), (x + w, y + h), color, 2)
+                        label = f"#{track.track_id}"
+                        if looking:
+                            label += " LOOKING"
+                        cv2.putText(display, label,
+                                    (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
+                    cv2.imshow("SMAIT Vision", display)
+                    cv2.waitKey(1)
+
+                await asyncio.sleep(0.033)  # ~30 FPS
+        finally:
+            if cv2 is not None:
+                cv2.destroyAllWindows()
 
     async def _session_timeout_loop(self) -> None:
         """Periodically check for session timeouts."""
