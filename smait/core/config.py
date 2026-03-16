@@ -71,7 +71,7 @@ class GazeConfig:
 
 @dataclass
 class EngagementConfig:
-    min_gaze_duration_s: float = 2.0
+    min_gaze_duration_s: float = 0.5
     disengage_gaze_timeout_s: float = 3.0
     face_area_threshold: int = 3000
     # DOA fusion parameters

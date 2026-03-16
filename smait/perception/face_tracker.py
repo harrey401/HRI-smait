@@ -21,9 +21,11 @@ from smait.core.events import EventBus, EventType
 logger = logging.getLogger(__name__)
 
 # IOU threshold for re-associating faces across frames
-IOU_THRESHOLD = 0.3
+IOU_THRESHOLD = 0.2
+# Centroid distance threshold (pixels) as fallback when IOU fails
+CENTROID_DIST_THRESHOLD = 100.0
 # Time before a lost face is removed from tracking
-FACE_LOST_TIMEOUT_S = 2.0
+FACE_LOST_TIMEOUT_S = 3.0
 
 # Default model path (relative to project root)
 _DEFAULT_MODEL_PATH = Path(__file__).resolve().parents[2] / "models" / "face_landmarker.task"
@@ -165,10 +167,15 @@ class FaceTracker:
         matched_track_ids: set[int] = set()
         matched_det_indices: set[int] = set()
 
-        # Compute IOU between all tracks and detections
+        # Compute IOU between all tracks and detections, with centroid fallback
         for det_idx, (det_bbox, det_landmarks, det_conf) in enumerate(detections):
             best_iou = 0.0
             best_track_id = None
+            best_centroid_dist = float("inf")
+            centroid_candidate = None
+
+            det_cx = det_bbox[0] + det_bbox[2] / 2
+            det_cy = det_bbox[1] + det_bbox[3] / 2
 
             for track_id, track in self._tracks.items():
                 if track_id in matched_track_ids:
@@ -177,6 +184,18 @@ class FaceTracker:
                 if iou > best_iou:
                     best_iou = iou
                     best_track_id = track_id
+
+                # Centroid distance fallback
+                tcx, tcy = track.center
+                dist = ((det_cx - tcx) ** 2 + (det_cy - tcy) ** 2) ** 0.5
+                if dist < best_centroid_dist:
+                    best_centroid_dist = dist
+                    centroid_candidate = track_id
+
+            # Use centroid fallback if IOU fails but centroid is close
+            if best_iou < IOU_THRESHOLD and best_centroid_dist < CENTROID_DIST_THRESHOLD:
+                best_track_id = centroid_candidate
+                best_iou = IOU_THRESHOLD  # Force match
 
             if best_iou >= IOU_THRESHOLD and best_track_id is not None:
                 # Update existing track

@@ -222,9 +222,19 @@ class HRISystem:
             if not self._voice_only and self.session.state not in (
                 SessionState.ENGAGED, SessionState.CONVERSING
             ):
-                logger.debug("Ignoring speech segment — session state: %s",
-                             self.session.state.name)
-                return
+                # Speech + face auto-engagement: if faces visible, auto-engage
+                if self.face_tracker and self.face_tracker.tracks:
+                    logger.info("Speech + face detected — auto-engaging")
+                    self.event_bus.emit(EventType.ENGAGEMENT_START, {
+                        "track_id": next(iter(self.face_tracker.tracks)),
+                        "face_area": 0,
+                        "gaze_duration": 0,
+                        "timestamp": time.monotonic(),
+                    })
+                else:
+                    logger.debug("Ignoring speech segment — session state: %s, no faces",
+                                 self.session.state.name)
+                    return
 
             self.metrics.start_timer("separation")
 
@@ -336,9 +346,14 @@ class HRISystem:
             if not self._voice_only and self.session.state not in (
                 SessionState.ENGAGED, SessionState.CONVERSING
             ):
-                logger.debug("Ignoring end-of-turn — session state: %s",
-                             self.session.state.name)
-                return
+                # Speech + face fallback: if faces visible, proceed anyway
+                if self.face_tracker and self.face_tracker.tracks:
+                    logger.info("End-of-turn with face present — processing despite %s state",
+                                self.session.state.name)
+                else:
+                    logger.debug("Ignoring end-of-turn — session state: %s, no faces",
+                                 self.session.state.name)
+                    return
 
             self.metrics.start_timer("dialogue")
 
@@ -476,6 +491,9 @@ class HRISystem:
             except ImportError:
                 logger.warning("show_video enabled but cv2 not available")
 
+        last_processed_frame_id = -1
+        video_frame_count = 0
+
         try:
             while self._running:
                 # Wait for connection
@@ -489,22 +507,31 @@ class HRISystem:
                     await asyncio.sleep(0.033)  # ~30 FPS polling
                     continue
 
+                # Skip already-processed frames
+                if frame_data.frame_id == last_processed_frame_id:
+                    await asyncio.sleep(0.016)
+                    continue
+                last_processed_frame_id = frame_data.frame_id
+                video_frame_count += 1
+
                 timestamp = frame_data.timestamp
 
-                # Face tracking
+                # Face tracking (every frame — lightweight)
                 tracks = self.face_tracker.process_frame(frame_data.image, timestamp)
 
-                # Gaze estimation + Lip extraction for each tracked face
+                # Gaze estimation every other frame (GPU-heavy)
                 gaze_results = {}
+                run_gaze = (video_frame_count % 2 == 0) or not tracks
                 for track in tracks:
-                    gaze = self.gaze_estimator.estimate(frame_data.image, track, timestamp)
-                    gaze_results[track.track_id] = gaze
+                    if run_gaze:
+                        gaze = self.gaze_estimator.estimate(frame_data.image, track, timestamp)
+                        gaze_results[track.track_id] = gaze
 
                     if self.lip_extractor:
                         self.lip_extractor.extract(frame_data.image, track, timestamp)
 
                 # Engagement detection (pass frame width for DOA-to-pixel mapping)
-                if self.engagement_detector:
+                if self.engagement_detector and gaze_results:
                     frame_w = frame_data.image.shape[1]
                     self.engagement_detector.update(tracks, gaze_results, timestamp, frame_w)
 
