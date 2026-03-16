@@ -108,7 +108,8 @@ async def run(args: argparse.Namespace) -> None:
     config.connection.host = args.host
     config.connection.port = args.port
     config.debug = args.debug
-    config.show_video = args.show_video
+    if args.show_video:
+        config.show_video = True  # CLI flag enables; config default (True) used otherwise
 
     local_ip = get_local_ip()
     logger = logging.getLogger("smait")

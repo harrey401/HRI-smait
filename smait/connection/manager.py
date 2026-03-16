@@ -132,6 +132,7 @@ class ConnectionManager:
                 "timestamp": time.monotonic(),
             })
         elif frame.frame_type == FrameType.VIDEO:
+            logger.debug("Video frame received: %d bytes", len(frame.payload))
             self._event_bus.emit(EventType.FACE_UPDATED, {
                 "jpeg": frame.payload,
                 "type": "video",
